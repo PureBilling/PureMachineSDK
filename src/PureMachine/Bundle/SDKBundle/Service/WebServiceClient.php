@@ -2,15 +2,12 @@
 
 namespace PureMachine\Bundle\SDKBundle\Service;
 
-use JMS\DiExtraBundle\Annotation\Service;
-use JMS\DiExtraBundle\Annotation\Inject;
-use JMS\DiExtraBundle\Annotation\InjectParams;
-
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Doctrine\Common\Annotations\FileCacheReader;
 use Doctrine\Common\Annotations\AnnotationReader;
-
+use PureMachine\Bundle\SDKBundle\Event\WebServiceCalledEvent;
+use PureMachine\Bundle\SDKBundle\Event\WebServiceCallingEvent;
 use PureMachine\Bundle\SDKBundle\Store\Base\JsonSerializable;
 use PureMachine\Bundle\SDKBundle\Exception\WebServiceException;
 use PureMachine\Bundle\SDKBundle\Exception\Exception;
@@ -22,22 +19,17 @@ use PureMachine\Bundle\SDKBundle\Store\WebService\ErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 
-/**
- * @Service("pure_machine.sdk.web_service_client")
- */
 class WebServiceClient implements ContainerAwareInterface
 {
     protected $container = null;
     protected $annotationReader = null;
     protected $validator = null;
+    protected $login = null;
+    protected $password = null;
 
     /**
      * Symfony2 container
      * Called only if we are in a Symfony2 context.
-     *
-     * @InjectParams({
-     *     "container" = @Inject("service_container")
-     * })
      */
     public function setContainer(ContainerInterface $container = null)
     {
@@ -82,17 +74,52 @@ class WebServiceClient implements ContainerAwareInterface
     public function call($webServiceName, $inputData=null,
                               $version='V1')
     {
+        //Create unique token to identify the call
+        $token = uniqid("CALL_");
+        $eventDispatcher = $this->container->get("event_dispatcher");
+
+        /*
+         * Throw initial event before executing
+         * the call, remote or local
+         */
+        if ($inputData instanceof BaseStore) {
+            $event = new WebServiceCallingEvent($token, $webServiceName, $inputData, $version);
+            $eventDispatcher->dispatch("puremachine.webservice.calling", $event);
+        }
+
         //check if the service is local
-        if ($this->isSymfony() && $this->container->has('pure_machine.sdk.web_service_manager')) {
-            $WebServiceManager = $this->container->get('pure_machine.sdk.web_service_manager');
+        if ($this->isSymfony() && $this->container->has('pureMachine.sdk.webServiceManager')) {
+            $WebServiceManager = $this->container->get('pureMachine.sdk.webServiceManager');
 
-            if ($WebServiceManager->getSchema($webServiceName))
+            if ($WebServiceManager->getSchema($webServiceName)) {
+                $return = $WebServiceManager->localCall($webServiceName, $inputData, $version);
 
-                return $WebServiceManager->localCall($webServiceName, $inputData, $version);
+                /*
+                 * Throw post event after executing
+                 * the local call
+                 */
+                if ($return instanceof BaseStore) {
+                    $event = new WebServiceCalledEvent($token, $webServiceName, $return, $version, true);
+                    $eventDispatcher->dispatch("puremachine.webservice.called", $event);
+                }
+
+                return $return;
+            }
         }
 
         //We did not found the webService in local, we do it remotely.
-        return $this->remoteCall($webServiceName, $inputData, $version);
+        $return = $this->remoteCall($webServiceName, $inputData, $version);
+
+        /*
+         * Throw post event after executing
+         * the local call
+         */
+        if ($return instanceof BaseStore) {
+            $event = new WebServiceCalledEvent($token, $webServiceName, $return, $version, false);
+            $eventDispatcher->dispatch("puremachine.webservice.called", $event);
+        }
+
+        return $return;
     }
 
     protected function remoteCall($webServiceName, $inputData, $version)
@@ -103,6 +130,10 @@ class WebServiceClient implements ContainerAwareInterface
         } catch (WebServiceException $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }
+
+        //Handle special mapping :
+        //Simple type are mapped to Store classes
+        $inputData = StoreHelper::simpleTypeToStore($inputData);
 
         //Validate input value
         try {
@@ -121,7 +152,8 @@ class WebServiceClient implements ContainerAwareInterface
 
         //Make the http call
         $http = $this->container->get('pure_machine.sdk.http_helper');
-        $fullUrl = $http->getFullUrl($url, $inputData);
+        $fullUrl = $http->getFullUrl($url, $inputData, 'POST', array(),
+                                     $this->login . ":" . $this->password);
         try {
             $response = $http->getJsonResponse($url, $inputData);
         } catch (HTTPException $e) {
@@ -131,7 +163,8 @@ class WebServiceClient implements ContainerAwareInterface
         //Cast $inputValue if needed
         try {
             $response = StoreHelper::unSerialize($response, array(),
-                                                 $this->getAnnotationReader());
+                                                 $this->getAnnotationReader(),
+                                                 $this->getContainer());
             } catch (Exception $e) {
                 return $this->buildErrorResponse($webServiceName, $version, $e, $fullUrl);
         }
@@ -223,10 +256,17 @@ class WebServiceClient implements ContainerAwareInterface
             //Validate the store
             if (!$value->validate($this->getValidator())) {
                 $violations = $value->getViolations();
-                throw new WebServiceException("Store validation: "
-                                             .$violations[0]->getMessage() ." for property '"
-                                             .$violations[0]->getPropertyPath() ."' in "
-                                             .get_class($value), $errorCode);
+                $property = $violations[0]->getPropertyPath();
+                $message = "Store validation: "
+                          .$violations[0]->getMessage() ." for property '"
+                          .$property ."' in "
+                          .get_class($value);
+
+                $propertyAssesor = "get" . ucfirst($property);
+                $propValue = $value->$propertyAssesor();
+                $message .= ". value(type:" .gettype($propValue). ")";
+                if (is_scalar($propValue)) $message .= "='$propValue'";
+                throw new WebServiceException($message, $errorCode);
             }
         //We have an array of object, and potentiallt stores
         //We need to check the type and validate stores
@@ -290,5 +330,20 @@ class WebServiceClient implements ContainerAwareInterface
         if ($class=='DateTime' || $class=='stdClass') return false;
 
         return true;
+    }
+
+    public function setCredentials($login, $password)
+    {
+        $this->login = $login;
+        $this->password = $password;
+    }
+
+    /**
+     * Should be used only for local resolution
+     * in remote, use the Symfony firewall.
+     */
+    public function getCredentials()
+    {
+        return array( $this->login, $this->password);
     }
 }

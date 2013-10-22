@@ -21,7 +21,10 @@ class Exception extends \Exception
         if (defined($message_code)) $message = "$code: " . constant($message_code);
         else $message = "$code: " . constant("static::GENERIC_001_MESSAGE");
 
-        parent::__construct("$message. $detailledMessage", 0, $previous);
+        if (is_numeric($code)) $numCode = $code;
+        else $numCode = 0;
+
+        parent::__construct("$message. $detailledMessage", $numCode, $previous);
 
         $this->exceptionStore = new ExceptionStore();
         $this->exceptionStore->setMessage($message);
@@ -33,9 +36,33 @@ class Exception extends \Exception
 
         $stack = $this->getTrace();
         if (count($stack) > 0) {
-            $this->exceptionStore->setFile(basename($stack[0]['file'],'.php'));
-            $this->exceptionStore->setLine($stack[0]['line']);
+            //Setting default unknown values
+            $this->exceptionStore->setFile("unknown");
+            $this->exceptionStore->setLine(0);
+            //Searching for a valid stackItem
+            $stackItem = $this->searchForFileAndLineCalledFromStack($stack);
+            if (!is_null($stackItem)) {
+                $this->exceptionStore->setFile(basename($stackItem['file'],'.php'));
+                $this->exceptionStore->setLine($stackItem['line']);
+            }
         }
+    }
+
+    /**
+     * Search for a valid stack item with file and line not a raw class
+     * call. Return the stack item with this data or null in case not stack item
+     * found
+     *
+     * @param  array      $stack
+     * @return array|null
+     */
+    private function searchForFileAndLineCalledFromStack(array $stack)
+    {
+        for ($i=0;$i<count($stack);$i++) {
+            if(array_key_exists("file", $stack[$i]) && array_key_exists("line", $stack[$i])) return $stack[$i];
+        }
+
+        return null;
     }
 
     public function getStore()

@@ -17,6 +17,7 @@ abstract class BaseStore implements JsonSerializable
 {
     private static $jsonSchema = array();
     private static $annotationReader = null;
+    private static $validator = null;
 
     /**
      * Array of ConstraintViolation instances
@@ -59,6 +60,11 @@ abstract class BaseStore implements JsonSerializable
     public static function setAnnotationReader($annotationReader)
     {
         self::$annotationReader = $annotationReader;
+    }
+
+    public static function setValidator($validator)
+    {
+        self::$validator = $validator;
     }
 
     /**
@@ -148,7 +154,8 @@ abstract class BaseStore implements JsonSerializable
             $storeClass = StoreHelper::getStoreClass (null, $storeClasses);
 
             if ($value) {
-                $value = StoreHelper::unSerialize($value, $storeClasses);
+                $value = StoreHelper::unSerialize($value, $storeClasses,
+                                                  self::$annotationReader);
             } elseif ($storeClass && $definition->type == 'object') {
                 $value = StoreHelper::createClass($storeClass, $data);
             } elseif ($definition->type == 'array')
@@ -172,7 +179,10 @@ abstract class BaseStore implements JsonSerializable
         }
 
         $property = $this->getPropertyFromMethod($method);
-        if (!$this->isStoreProperty($property)) return;
+        if (!$this->isStoreProperty($property))
+            throw new StoreException("$property is not a store property in "
+                                    .get_class($this),
+                                     StoreException::STORE_005);
 
         $methodPrefix = substr($method,0,3);
         $propertyExists = property_exists($this, $property);
@@ -187,25 +197,28 @@ abstract class BaseStore implements JsonSerializable
                         $prop = &$this->$property;
 
                         return $prop[$arguments[0]];
-                    } else throw new \Exception("$method(\$key=null) take 0 or 1 arguments.");
+                    } else throw new StoreException("$method(\$key=null) take 0 or 1 arguments.",
+                                                    StoreException::STORE_005);
                 }
                 break;
             case 'set':
                 if ($propertyExists) {
-                        if (count($arguments) == 1) {
+                    if (count($arguments) == 1) {
                         $this->$property = $arguments[0];
 
                         return $this;
-                    } else throw new \Exception("$method(\$value) takes 1 argument.");
+                    } else throw new StoreException("$method(\$value) takes 1 argument.",
+                                                    StoreException::STORE_005);
                 }
-                    break;
+                break;
            case 'add':
                //FIXME: Change tracking does not support array addition or deletion.
                if ($propertyExists) {
                    $arrayToAdd = &$this->$property;
                    if (count($arguments) == 1) $arrayToAdd[] = $arguments[0];
                    elseif (count($arguments) == 2) $arrayToAdd[$arguments[1]] = $arguments[0];
-                   else throw new \Exception("$method(\$value, \$key=null) take 1 or two arguments.");
+                   else throw new StoreException("$method(\$value, \$key=null) take 1 or two arguments.",
+                                                 StoreException::STORE_005);
                }
 
                return $this;
@@ -253,6 +266,8 @@ abstract class BaseStore implements JsonSerializable
                 } elseif ($annotation instanceof Assert\Type) {
                     $definition[$prop->getName()]->type = $annotation->type;
                 }
+
+                static::schemaBuilderHook($annotation, $prop, $definition);
             }
         }
 
@@ -281,6 +296,14 @@ abstract class BaseStore implements JsonSerializable
         self::$jsonSchema[$class]->configuration->className = $class;
 
         return self::$jsonSchema[$class];
+    }
+
+    /**
+     * Hook function to help child class to extend the json Schema.
+     */
+    public static function schemaBuilderHook($annotation, $property, array $definition)
+    {
+
     }
 
     public function addViolation($path, $message)
@@ -353,10 +376,12 @@ abstract class BaseStore implements JsonSerializable
             }
         }
 
-        if (!$validator)
-            $validator = Validation::createValidatorBuilder()
+        if (!$validator) {
+            if (self::$validator) $validator = self::$validator;
+            else $validator = Validation::createValidatorBuilder()
                                      ->enableAnnotationMapping()
                                      ->getValidator();
+        }
 
         $violationsFromValidation = $validator->validate($this);
         foreach($violationsFromValidation as $violation) $this->violations[] = $violation;
@@ -382,5 +407,10 @@ abstract class BaseStore implements JsonSerializable
         if (property_exists($this, substr($method,3))) return substr($method,3);
 
         return $property;
+    }
+
+    public function __toString()
+    {
+        return print_r($this->serialize(), true);
     }
 }

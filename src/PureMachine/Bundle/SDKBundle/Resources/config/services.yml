@@ -1,7 +1,17 @@
-parameters:
-#    pure_machine_sdk.example.class: PureMachine\Bundle\SDKBundle\Example
-
 services:
-#    pure_machine_sdk.example:
-#        class: %pure_machine_sdk.example.class%
-#        arguments: [@service_id, "plain_value", %parameter%]
+
+    pure_machine.sdk.web_service_client:
+        class: PureMachine\Bundle\SDKBundle\Service\WebServiceClient
+        calls:
+            - [setContainer, [@service_container] ]
+
+    pure_machine.sdk.http_helper:
+        class: PureMachine\Bundle\SDKBundle\Service\HttpHelper
+
+    pure_machine.sdk.string_helper:
+        class: PureMachine\Bundle\SDKBundle\Service\StringHelper
+
+    pure_machine.sdk.store_factory:
+        class: PureMachine\Bundle\SDKBundle\Service\StoreFactory
+        calls:
+            - [setContainer, [@service_container] ]

@@ -1,6 +1,7 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Store\Type;
 
+use JMS\DiExtraBundle\Annotation\Service;
 use Symfony\Component\Validator\Constraints as Assert;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
 use PureMachine\Bundle\SDKBundle\Store\Base\SimpleType;

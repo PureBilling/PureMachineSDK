@@ -2,14 +2,9 @@
 
 namespace PureMachine\Bundle\SDKBundle\Service;
 
-use JMS\DiExtraBundle\Annotation\Service;
-
 use PureMachine\Bundle\SDKBundle\Store\LogStore;
 use PureMachine\Bundle\SDKBundle\Exception\HTTPException;
 
-/**
- * @Service("pure_machine.sdk.http_helper")
- */
 class HttpHelper
 {
     private $log= null;

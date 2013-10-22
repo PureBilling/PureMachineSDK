@@ -8,8 +8,7 @@
         "psr-0": { "PureMachine": "src/" }
     },
     "require": {
-        "php": ">=5.3.3",
-        "jms/di-extra-bundle": "1.4.*"
+        "php": ">=5.3.3"
     }
 }
 

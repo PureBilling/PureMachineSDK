@@ -2,11 +2,6 @@
 
 namespace PureMachine\Bundle\SDKBundle\Service;
 
-use JMS\DiExtraBundle\Annotation\Service;
-
-/**
- * @Service("pure_machine.sdk.string_helper")
- */
 class StringHelper
 {
     public static function contains($haystack, $needle, $case = true, $pos = 0)
@@ -20,9 +15,11 @@ class StringHelper
         return $result;
     }
 
-    public static function strBetween($str,$start,$end)
+    public static function strBetween($str,$start,$end=null)
     {
-        if (preg_match_all('/' . preg_quote($start) . '(.*?)' . preg_quote($end) . '/',$str,$matches)) {
+        if ($end === null && self::startsWith($str, $start)) {
+            return substr($str, strpos($str,$start) + strlen($start));
+        } elseif (preg_match_all('/' . preg_quote($start) . '(.*?)' . preg_quote($end) . '/',$str,$matches)) {
             return $matches[1];
         }
         // no matches
@@ -31,8 +28,8 @@ class StringHelper
 
     /**
      *
-     * @param string  $needle   string to search in
-     * @param string  $haystack string that has to be at starts.
+     * @param string  $haystack string to search in
+     * @param string  $needle   string that has to be at starts.
      * @param boolean $case     if true, case sensitive.
      */
     public static function startsWith($haystack, $needle, $case = true)

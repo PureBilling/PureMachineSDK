@@ -1,6 +1,10 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Store\Base;
 
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use PureMachine\Bundle\SDKBundle\Store\Type\String;
+use PureMachine\Bundle\SDKBundle\Store\Type\Boolean;
+
 /**
  * Class that centralize all method to convert and check data
  * injected inside a Store
@@ -36,15 +40,22 @@ class StoreHelper
         return $inValue;
     }
 
-    public static function unSerialize($inValue, array $defaultClassNames, $annotationReader=null)
+    public static function unSerialize($inValue, array $defaultClassNames,
+                                       $annotationReader=null, $symfonyContainer=null)
     {
-        if ($inValue instanceof BaseStore) return $inValue;
+        if ($inValue instanceof BaseStore) {
+            if ($symfonyContainer && $inValue instanceof ContainerAwareInterface)
+            $inValue->setContainer($symfonyContainer);
+
+            return $inValue;
+        }
 
         if ($inValue instanceof \stdClass) {
             //If there is a StoreClass defined, we try to initialize it
             $storeClass = self::getStoreClass($inValue, $defaultClassNames);
             if ($storeClass) {
-                $value = self::createClass($storeClass, $inValue, $annotationReader);
+                $value = self::createClass($storeClass, $inValue, $annotationReader,
+                                           $symfonyContainer);
             } else $value = $inValue;
         } elseif (is_array($inValue)) {
             //If the property if an array of Store, we create it
@@ -60,14 +71,17 @@ class StoreHelper
     /**
      * Create a class if exists and not abstract
      */
-    public static function createClass($class, $data, $annotationReader=null)
+    public static function createClass($class, $data, $annotationReader=null,
+                                       $symfonyContainer=null)
     {
         if (!class_exists($class)) return null;
         $ref = new \ReflectionClass($class);
         if ($ref->isAbstract()) return null;
         $store =  new $class($data);
 
-        if ($annotationReader) $store->getAnnotationReader($annotationReader);
+        if ($annotationReader) $store->setAnnotationReader($annotationReader);
+        if ($symfonyContainer && $store instanceof ContainerAwareInterface)
+            $store->setContainer($symfonyContainer);
 
         return $store;
     }
@@ -101,10 +115,31 @@ class StoreHelper
      * Check if the store class type is part of declared classes in
      * storeClasses.
      */
-    public function checkStoreClass($store, array $storeClasses)
+    public static function checkStoreClass($store, array $storeClasses)
     {
         if (in_array(get_class($store), $storeClasses)) return true;
 
         return false;
+    }
+
+    /*
+     * Automatically convert basic type to store
+     */
+    public static function simpleTypeToStore($inputData)
+    {
+        switch (gettype($inputData)) {
+            case 'string':
+                $store = new String();
+                $store->setValue($inputData);
+
+                return $store;
+            case 'boolean':
+                $store = new Boolean();
+                $store->setValue($inputData);
+
+                return $store;
+        }
+
+        return $inputData;
     }
 }

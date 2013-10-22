@@ -140,7 +140,6 @@ class StoreTest extends WebTestCase
         $this->assertEquals('test', $store->getTestProperty());
         $this->assertEquals('getter is forcing the value', $store->getPropertyWithCustomGetter());
         $this->assertEquals('setter is forcing the value', $store->getPropertyWithCustomSetter());
-        $this->assertEquals(0, count($store->getModifiedProperties()));
 
         //Composed Store
         $this->assertTrue($store->getComposedStore() instanceof ComposedStore);

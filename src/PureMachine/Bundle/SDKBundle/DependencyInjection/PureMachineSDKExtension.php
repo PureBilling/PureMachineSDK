@@ -24,5 +24,10 @@ class PureMachineSDKExtension extends Extension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+
+        //Load debug Services in needed
+        if ($container->getParameter('kernel.environment') == 'dev' || $container->getParameter('kernel.environment') == 'test') {
+             $loader->load('services_dev.yml');
+        }
     }
 }
