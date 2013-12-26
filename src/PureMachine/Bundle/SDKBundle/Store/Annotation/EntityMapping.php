@@ -7,8 +7,8 @@ use Doctrine\Common\Annotations\Annotation;
  * @Annotation
  * @Target("PROPERTY")
  */
-class Property extends Annotation
+class EntityMapping extends Annotation
 {
-    public $description = 'default description';
-    public $private = false;
+    /** @var string @Required */
+    public $value = 'auto';
 }

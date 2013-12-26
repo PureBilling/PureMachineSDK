@@ -14,6 +14,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 {
     protected $doctrineEntityManager = null;
     protected $container = null;
+    protected $entityCache = array();
 
     /**
      * Initialize the store from a array or a stdClass
@@ -62,6 +63,14 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         if ($annotation instanceof Store\Entity)
             $definition[$property->getName()]->entity = $annotation->value;
 
+        if ($annotation instanceof Store\EntityMapping) {
+            if ($annotation->value == 'auto') {
+                $definition[$property->getName()]->entityMapping = $property->getName();
+            } else {
+                $definition[$property->getName()]->entityMapping = $annotation->value;
+            }
+        }
+
         parent::schemaBuilderHook($annotation, $property, $definition);
     }
 
@@ -72,6 +81,10 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
      */
     public function __call($method, $arguments)
     {
+        if ($method == 'getEntity' && $this->isStoreProperty('id')) {
+            $method = 'getIdEntity';
+        }
+
         $property = $this->getPropertyFromMethod($method);
         if (!$this->isStoreProperty($property)) {
             throw new \Exception("$method() method does not exits in " . get_class($this));
@@ -80,6 +93,9 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         $methodPrefix = substr($method,0,3);
         $propertyExists = property_exists($this, $property);
 
+        /**
+         * Entity resoliver (Entity annotation)
+         */
         if ($methodPrefix == 'get' && $propertyExists &&
             substr($method, strlen($method)-6) == 'Entity') {
             return $this->resolveEntity($property);
@@ -92,7 +108,82 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
             if(count($arguments)==0) throw new StoreException("$method(\$value) takes 1 argument.");
         }
 
+        /**
+         * Entity synchronization (EntityMapping annotation)
+         */
+        if ($methodPrefix == 'set') {
+            return $this->setEntityPropertyValue($method, $arguments, $property);
+        }
+
+        //Get the value from the entity
+        //and define it to the store
+        if ($methodPrefix == 'get')
+
+            return $this->setStorePropertyValueFromEntity($property);
+
         return parent::__call($method, $arguments);
+    }
+
+    public function setEntity($entity)
+    {
+        $this->entityCache[$this->getId()] = $entity;
+    }
+
+    protected function setStorePropertyValueFromEntity($property)
+    {
+        $propSchema = static::getJsonSchema()->definition
+                                             ->$property;
+        $getter = "get" . ucfirst($property);
+
+        if (!isset($propSchema->entityMapping))
+
+            return parent::__call($getter, array());
+
+        $entityMapping = $propSchema->entityMapping;
+        $mappings = explode('.', $entityMapping);
+        $entity = $this->getEntity();
+        foreach ($mappings as $mapping) {
+            $entityGetter = "get" . ucfirst($mapping);
+            $entity = $entity->$entityGetter();
+            if (!$entity) return parent::__call($getter, array());
+        }
+        $setter = "set" . ucfirst($property);
+        parent::__call($setter, array($entity));
+
+        return parent::__call($getter, array());
+    }
+
+    protected function setEntityPropertyValue($method, $arguments, $property)
+    {
+        parent::__call($method, $arguments);
+        $value = $this->$property;
+
+        if (!$this->isStoreProperty($property))
+
+            return $this;
+
+        $propSchema = static::getJsonSchema()->definition
+                                             ->$property;
+        if (!isset($propSchema->entityMapping))
+
+            return $this;
+
+        $entityMapping = $propSchema->entityMapping;
+        $mappings = explode('.', $entityMapping);
+        $entity = $this->getEntity();
+        $entitySetterProperty = array_pop($mappings);
+        if (count($mappings) > 0) {
+            foreach ($mappings as $mapping) {
+                $entityGetter = "get" . ucfirst($mapping);
+                $entity = $entity->$entityGetter();
+            }
+        }
+
+        $setter = "set" . ucfirst($entitySetterProperty);
+        //Need to check for readonly method
+        if (method_exists($entity, $setter)) $entity->$setter($value);
+
+        return $this;
     }
 
     protected function resolveEntity($propertyName)
@@ -100,6 +191,10 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         $id = $this->$propertyName;
 
         if ($id instanceof BaseStore) $id = $id->getId();
+
+        if (array_key_exists($id, $this->entityCache))
+
+                return $this->entityCache[$id];
 
         if (!is_scalar($id))
             throw new StoreException("Can't resolve entity $propertyName. id is an " . gettype($id)
@@ -132,7 +227,11 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
             $dispatcher->dispatch('pureMachine.store.resolveEntity', $event);
 
             $entity = $event->getEntity();
-            if ($entity) return $entity;
+            if ($entity) {
+                $this->entityCache[$id] = $entity;
+
+                return $entity;
+            }
         }
 
         //If entity is set to auto, and resolution has not been done throw an event
@@ -164,7 +263,21 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
             throw new StoreException("entity '$id' in repository '$repository' not "
                                               ."found for property $propertyName",
                                               StoreException::STORE_004);
+        $this->entityCache[$id] = $entity;
 
         return $entity;
+    }
+
+    public function validate($validator = null)
+    {
+        /**
+         * Need to synchronize entity back to store
+         */
+        $schema = static::getJsonSchema();
+        foreach ($schema->definition as $propertyName=>$definition) {
+            $this->setStorePropertyValueFromEntity($propertyName);
+        }
+
+        return parent::validate($validator);
     }
 }

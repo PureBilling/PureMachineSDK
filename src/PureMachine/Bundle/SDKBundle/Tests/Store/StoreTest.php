@@ -5,6 +5,7 @@ namespace PureMachine\Bundle\SDKBundle\Tests\Store;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\ComposedStore;
+use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\PrivateStore;
 
 /**
  * @code
@@ -249,5 +250,20 @@ class StoreTest extends WebTestCase
         //add an invalid store type into the array.
         $store->addStore(new StoreClass\TestStore());
         $this->assertFalse($store->validate());
+    }
+
+    /**
+     * @code
+     * phpunit -v --filter testPrivateStore -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testPrivateStore()
+    {
+        $privateStore = new PrivateStore();
+        $privateStore->setTitleA('A');
+        $privateStore->setTitleB('B');
+
+        $json = $privateStore->serialize();
+        $this->assertFalse(isset($json->titleB));
     }
 }

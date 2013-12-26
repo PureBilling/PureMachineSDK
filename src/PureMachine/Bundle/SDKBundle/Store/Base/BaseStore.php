@@ -109,8 +109,10 @@ abstract class BaseStore implements JsonSerializable
         foreach ($schema->definition as $property => $definition) {
             $method = 'get' . ucfirst($property);
 
-            $value = StoreHelper::serialize($this->$method());
-            $answer[$property] = $value;
+            if ($definition->private == false) {
+                $value = StoreHelper::serialize($this->$method());
+                $answer[$property] = $value;
+            }
         }
 
         return (object) $answer;
@@ -161,8 +163,10 @@ abstract class BaseStore implements JsonSerializable
             } elseif ($definition->type == 'array')
                 $value = array();
 
-            $method = 'set' . ucfirst($property);
-            $this->$method($value);
+            if (!is_null($value)) {
+                $method = 'set' . ucfirst($property);
+                $this->$method($value);
+            }
         }
     }
 
@@ -261,6 +265,7 @@ abstract class BaseStore implements JsonSerializable
             foreach ($annotations AS $annotation) {
                 if ($annotation instanceof Store\Property) {
                     $definition[$prop->getName()]->description = $annotation->description;
+                    $definition[$prop->getName()]->private = $annotation->private;
                 } elseif ($annotation instanceof Store\StoreClass) {
                     $definition[$prop->getName()]->storeClasses = (array) $annotation->value;
                 } elseif ($annotation instanceof Assert\Type) {
@@ -333,7 +338,7 @@ abstract class BaseStore implements JsonSerializable
      * validate the store with the restrictions
      * defined with property annotations
      *
-     * @return boolean
+     * @return boolean : True if valid
      */
     public function validate($validator=null)
     {
@@ -367,7 +372,9 @@ abstract class BaseStore implements JsonSerializable
                                 );
                     }
                 }
-            } elseif ($prodSchema->type=="array" && count($prodSchema->storeClasses) >0) {
+            } elseif ($prodSchema->type=="array" && count($prodSchema->storeClasses) >0
+                      && is_array($this->$propertyName)) {
+
                 foreach ($this->$propertyName as $store) {
                     if (!StoreHelper::checkStoreClass($store, $prodSchema->storeClasses))
                             $this->addViolation($propertyName, "'$propertyName' array element has a wrong "
