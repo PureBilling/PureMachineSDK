@@ -24,9 +24,9 @@ class StoreHelper
         return false;
     }
 
-    public static function serialize($inValue)
+    public static function serialize($inValue, $includePrivate=false)
     {
-        if ($inValue instanceof BaseStore) return $inValue->serialize();
+        if ($inValue instanceof BaseStore) return $inValue->serialize($includePrivate);
 
         if (is_array($inValue)) {
                 $value = array();

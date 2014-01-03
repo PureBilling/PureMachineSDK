@@ -16,8 +16,8 @@ use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
 abstract class BaseStore implements JsonSerializable
 {
     private static $jsonSchema = array();
-    private static $annotationReader = null;
-    private static $validator = null;
+    protected static $annotationReader = null;
+    protected static $validator = null;
 
     /**
      * Array of ConstraintViolation instances
@@ -102,15 +102,15 @@ abstract class BaseStore implements JsonSerializable
     /**
      * Serilize the Store
      */
-    public function serialize()
+    public function serialize($includePrivate=false)
     {
         $answer = array();
         $schema = $this->getJsonSchema();
         foreach ($schema->definition as $property => $definition) {
             $method = 'get' . ucfirst($property);
 
-            if ($definition->private == false) {
-                $value = StoreHelper::serialize($this->$method());
+            if ($definition->private == false || $includePrivate) {
+                $value = StoreHelper::serialize($this->$method(), $includePrivate);
                 $answer[$property] = $value;
             }
         }
@@ -418,6 +418,10 @@ abstract class BaseStore implements JsonSerializable
 
     public function __toString()
     {
-        return print_r($this->serialize(), true);
+        try {
+            return print_r($this->serialize(true), true);
+        } catch(\Exception $e) {
+            return "Exception raised: " . $e->getMessage();
+        }
     }
 }

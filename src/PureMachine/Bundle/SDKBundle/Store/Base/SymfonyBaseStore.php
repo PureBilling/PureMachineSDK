@@ -117,9 +117,9 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 
         //Get the value from the entity
         //and define it to the store
-        if ($methodPrefix == 'get')
-
-            return $this->setStorePropertyValueFromEntity($property);
+        if ($methodPrefix == 'get') {
+            return $this->setStorePropertyValueFromEntity($property, $arguments);
+        }
 
         return parent::__call($method, $arguments);
     }
@@ -129,15 +129,15 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         $this->entityCache[$this->getId()] = $entity;
     }
 
-    protected function setStorePropertyValueFromEntity($property)
+    protected function setStorePropertyValueFromEntity($property, $arguments)
     {
         $propSchema = static::getJsonSchema()->definition
                                              ->$property;
         $getter = "get" . ucfirst($property);
 
-        if (!isset($propSchema->entityMapping))
-
-            return parent::__call($getter, array());
+        if (!isset($propSchema->entityMapping)) {
+            return parent::__call($getter, $arguments);
+        }
 
         $entityMapping = $propSchema->entityMapping;
         $mappings = explode('.', $entityMapping);
@@ -145,12 +145,12 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         foreach ($mappings as $mapping) {
             $entityGetter = "get" . ucfirst($mapping);
             $entity = $entity->$entityGetter();
-            if (!$entity) return parent::__call($getter, array());
+            if (!$entity) return parent::__call($getter, $arguments);
         }
         $setter = "set" . ucfirst($property);
         parent::__call($setter, array($entity));
 
-        return parent::__call($getter, array());
+        return parent::__call($getter, $arguments);
     }
 
     protected function setEntityPropertyValue($method, $arguments, $property)
@@ -275,9 +275,21 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
          */
         $schema = static::getJsonSchema();
         foreach ($schema->definition as $propertyName=>$definition) {
-            $this->setStorePropertyValueFromEntity($propertyName);
+            $this->setStorePropertyValueFromEntity($propertyName, array());
         }
 
         return parent::validate($validator);
+    }
+    
+    public function attachSymfony(BaseStore $store)
+    {
+        $store->setValidator(static::$validator);
+        if ($store instanceof ContainerAwareInterface)
+            $store->setContainer($this->container);
+
+        if ($store instanceof SymfonyBaseStore)
+            $store->setAnnotationReader(static::$annotationReader);
+
+        return $store;
     }
 }
