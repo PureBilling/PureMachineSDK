@@ -159,13 +159,11 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         $value = $this->$property;
 
         if (!$this->isStoreProperty($property))
-
             return $this;
 
         $propSchema = static::getJsonSchema()->definition
                                              ->$property;
         if (!isset($propSchema->entityMapping))
-
             return $this;
 
         $entityMapping = $propSchema->entityMapping;
@@ -182,7 +180,6 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         $setter = "set" . ucfirst($entitySetterProperty);
         //Need to check for readonly method
         if (method_exists($entity, $setter)) $entity->$setter($value);
-
         return $this;
     }
 
@@ -192,9 +189,9 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 
         if ($id instanceof BaseStore) $id = $id->getId();
 
-        if (array_key_exists($id, $this->entityCache))
-
+        if (array_key_exists($id, $this->entityCache)) {
                 return $this->entityCache[$id];
+        }
 
         if (!is_scalar($id))
             throw new StoreException("Can't resolve entity $propertyName. id is an " . gettype($id)
@@ -280,7 +277,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 
         return parent::validate($validator);
     }
-    
+
     public function attachSymfony(BaseStore $store)
     {
         $store->setValidator(static::$validator);

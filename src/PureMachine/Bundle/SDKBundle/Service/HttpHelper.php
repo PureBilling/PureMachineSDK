@@ -86,7 +86,18 @@ class HttpHelper
         }
 
         if ($statusCode == 404) {
-            $e = new HTTPException("HTTP error :" . $statusCode ." for ". $url);
+            $e = new HTTPException("HTTP error :" . $statusCode ." for ". $url
+                                  ." . Page or service not found.");
+            $e->addMessage('Ouptut', $output);
+            $e->addMessage('called URL', $url);
+            $e->addMessage('debug URL (rebuilded)', $getUrl);
+            $e->addMessage('data sent:', $data);
+            throw $e;
+        }
+
+        if ($statusCode == 401) {
+            $e = new HTTPException("HTTP error :" . $statusCode ." for ". $url
+                                  ." . Invalid credentials.");
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('debug URL (rebuilded)', $getUrl);

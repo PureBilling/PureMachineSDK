@@ -44,7 +44,6 @@ class FakeEntity
     public function getSub()
     {
         if (!$this->sub) $this->sub = new FakeEntity();
-
         return $this->sub;
     }
 

@@ -18,6 +18,7 @@ use PureMachine\Bundle\SDKBundle\Store\WebService\ArrayResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\ErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
+use Symfony\Component\Validator\Validation;
 
 class WebServiceClient implements ContainerAwareInterface
 {
@@ -26,6 +27,12 @@ class WebServiceClient implements ContainerAwareInterface
     protected $validator = null;
     protected $login = null;
     protected $password = null;
+    protected $endPoint = null;
+
+    public function __construct($endPoint = null)
+    {
+        $this->endPoint = $endPoint;
+    }
 
     /**
      * Symfony2 container
@@ -44,7 +51,6 @@ class WebServiceClient implements ContainerAwareInterface
     public function isSymfony()
     {
         if ($this->container) return true;
-
         return false;
     }
 
@@ -74,15 +80,17 @@ class WebServiceClient implements ContainerAwareInterface
     public function call($webServiceName, $inputData=null,
                               $version='V1')
     {
-        //Create unique token to identify the call
-        $token = uniqid("CALL_");
-        $eventDispatcher = $this->container->get("event_dispatcher");
+        if ($this->container) {
+            //Create unique token to identify the call
+            $token = uniqid("CALL_");
+            $eventDispatcher = $this->container->get("event_dispatcher");
+        }
 
         /*
          * Throw initial event before executing
          * the call, remote or local
          */
-        if ($inputData instanceof BaseStore) {
+        if ($this->container && $inputData instanceof BaseStore) {
             $event = new WebServiceCallingEvent($token, $webServiceName, $inputData, $version);
             $eventDispatcher->dispatch("puremachine.webservice.calling", $event);
         }
@@ -98,7 +106,7 @@ class WebServiceClient implements ContainerAwareInterface
                  * Throw post event after executing
                  * the local call
                  */
-                if ($return instanceof BaseStore) {
+                if ($this->container && $return instanceof BaseStore) {
                     $event = new WebServiceCalledEvent($token, $webServiceName, $return, $version, true);
                     $eventDispatcher->dispatch("puremachine.webservice.called", $event);
                 }
@@ -114,7 +122,7 @@ class WebServiceClient implements ContainerAwareInterface
          * Throw post event after executing
          * the local call
          */
-        if ($return instanceof BaseStore) {
+        if ($this->container && $return instanceof BaseStore) {
             $event = new WebServiceCalledEvent($token, $webServiceName, $return, $version, false);
             $eventDispatcher->dispatch("puremachine.webservice.called", $event);
         }
@@ -151,11 +159,20 @@ class WebServiceClient implements ContainerAwareInterface
         }
 
         //Make the http call
-        $http = $this->container->get('pure_machine.sdk.http_helper');
+        if ($this->container)
+            $http = $this->container->get('pure_machine.sdk.http_helper');
+        else $http = new HttpHelper();
+
+        $authenticationToken = null;
+        if ($this->login) {
+            $authenticationToken = $this->login . ":" . $this->password;
+        }
+
         $fullUrl = $http->getFullUrl($url, $inputData, 'POST', array(),
-                                     $this->login . ":" . $this->password);
+                                     $authenticationToken);
+
         try {
-            $response = $http->getJsonResponse($url, $inputData);
+            $response = $http->getJsonResponse($url, $inputData, 'POST', array(), $authenticationToken);
         } catch (HTTPException $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e, $fullUrl);
         }
@@ -172,9 +189,19 @@ class WebServiceClient implements ContainerAwareInterface
         return $response;
     }
 
-    //FIXME: it's symfony2 specific. need to fix it.
     protected function buildRemoteUrl($webServiceName, $version)
     {
+        /**
+         * No symfony usecase
+         */
+        if (!$this->container && $this->endPoint) {
+            return $this->endPoint ."/$version/$webServiceName";
+        }
+
+         if (!$this->container)
+            throw new WebServiceException("You need to pass the API enpoint using "
+                                         ."class contructor", WebServiceException::WS_005);
+
         if (!$this->container->hasParameter('ws_namespaces'))
             throw new WebServiceException("ws_namespaces is not defined in the"
                                          ."configuration file", WebServiceException::WS_005);
@@ -302,7 +329,7 @@ class WebServiceClient implements ContainerAwareInterface
             if (is_array($data))
                 $response = new ArrayResponse();
             else $response = new Response();
-        } elseif ($this->container->get('kernel')->getEnvironment() != 'prod')
+        } elseif ($this->container && $this->container->get('kernel')->getEnvironment() != 'prod')
             $response = new DebugErrorResponse();
         else $response = new ErrorResponse();
 
@@ -318,7 +345,6 @@ class WebServiceClient implements ContainerAwareInterface
 
         if ($status == 'success') $response->response = $data;
         else $response->error = $data;
-
         return $response;
     }
 
@@ -328,7 +354,6 @@ class WebServiceClient implements ContainerAwareInterface
         if ($value instanceof \stdClass) return false;
         $class = get_class($value);
         if ($class=='DateTime' || $class=='stdClass') return false;
-
         return true;
     }
 

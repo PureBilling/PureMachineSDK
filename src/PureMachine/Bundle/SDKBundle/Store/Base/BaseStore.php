@@ -7,7 +7,6 @@ use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Constraints as Assert;
 
 use PureMachine\Bundle\SDKBundle\Exception\StoreException;
-use PureMachine\Bundle\SDKBundle\Store\Base\JsonSerializable;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
 
 /**
@@ -396,7 +395,6 @@ abstract class BaseStore implements JsonSerializable
         $this->isValidated = true;
 
         if (count($this->violations)>0) return false;
-
         return true;
     }
 
@@ -412,7 +410,6 @@ abstract class BaseStore implements JsonSerializable
 
         //if does not exists, return without changing lowercase
         if (property_exists($this, substr($method,3))) return substr($method,3);
-
         return $property;
     }
 
@@ -420,7 +417,7 @@ abstract class BaseStore implements JsonSerializable
     {
         try {
             return print_r($this->serialize(true), true);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return "Exception raised: " . $e->getMessage();
         }
     }

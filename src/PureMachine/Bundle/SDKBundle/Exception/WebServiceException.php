@@ -1,7 +1,6 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Exception;
 
-use PureMachine\Bundle\SDKBundle\Exception\Exception;
 use PureMachine\Bundle\SDKBundle\Store\WebService\Response;
 
 class WebServiceException extends Exception

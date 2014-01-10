@@ -20,7 +20,6 @@ class StoreHelper
     {
         foreach($classArray as $class)
             if ($object instanceof $class) return true;
-
         return false;
     }
 
@@ -44,8 +43,9 @@ class StoreHelper
                                        $annotationReader=null, $symfonyContainer=null)
     {
         if ($inValue instanceof BaseStore) {
-            if ($symfonyContainer && $inValue instanceof ContainerAwareInterface)
-            $inValue->setContainer($symfonyContainer);
+            if ($symfonyContainer && $inValue instanceof ContainerAwareInterface) {
+                $inValue->setContainer($symfonyContainer);
+            }
 
             return $inValue;
         }
@@ -53,7 +53,8 @@ class StoreHelper
         if ($inValue instanceof \stdClass) {
             //If there is a StoreClass defined, we try to initialize it
             $storeClass = self::getStoreClass($inValue, $defaultClassNames);
-            if ($storeClass) {
+
+            if ($storeClass) {if ($storeClass == 'Customer') die('ici');
                 $value = self::createClass($storeClass, $inValue, $annotationReader,
                                            $symfonyContainer);
             } else $value = $inValue;
@@ -79,9 +80,13 @@ class StoreHelper
         if ($ref->isAbstract()) return null;
         $store =  new $class($data);
 
-        if ($annotationReader) $store->setAnnotationReader($annotationReader);
-        if ($symfonyContainer && $store instanceof ContainerAwareInterface)
+        if ($annotationReader) {
+            $store->setAnnotationReader($annotationReader);
+        }
+
+        if ($symfonyContainer && $store instanceof ContainerAwareInterface) {
             $store->setContainer($symfonyContainer);
+        }
 
         return $store;
     }
@@ -99,14 +104,14 @@ class StoreHelper
     public static function getStoreClass($inValue, array $defaultClassName)
     {
         //Get the class inside the values
-        if ($inValue && isset($inValue->className) && class_exists($inValue->className))
-
+        if ($inValue && isset($inValue->className) && class_exists($inValue->className)) {
             return $inValue->className;
+        }
 
         //We take it from the array if there is only one
-        if (count($defaultClassName) == 1 && class_exists($defaultClassName[0]))
-
+        if (count($defaultClassName) == 1 && class_exists($defaultClassName[0])) {
             return $defaultClassName[0];
+        }
 
         return null;
     }
@@ -118,7 +123,6 @@ class StoreHelper
     public static function checkStoreClass($store, array $storeClasses)
     {
         if (in_array(get_class($store), $storeClasses)) return true;
-
         return false;
     }
 
