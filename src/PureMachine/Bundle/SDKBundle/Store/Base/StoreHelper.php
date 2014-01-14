@@ -43,9 +43,8 @@ class StoreHelper
                                        $annotationReader=null, $symfonyContainer=null)
     {
         if ($inValue instanceof BaseStore) {
-            if ($symfonyContainer && $inValue instanceof ContainerAwareInterface) {
-                $inValue->setContainer($symfonyContainer);
-            }
+            if ($symfonyContainer && $inValue instanceof ContainerAwareInterface)
+            $inValue->setContainer($symfonyContainer);
 
             return $inValue;
         }
@@ -53,18 +52,25 @@ class StoreHelper
         if ($inValue instanceof \stdClass) {
             //If there is a StoreClass defined, we try to initialize it
             $storeClass = self::getStoreClass($inValue, $defaultClassNames);
-
-            if ($storeClass) {if ($storeClass == 'Customer') die('ici');
-                $value = self::createClass($storeClass, $inValue, $annotationReader,
-                                           $symfonyContainer);
-            } else $value = $inValue;
+            if ($storeClass) {
+                $value = self::createClass(
+                        $storeClass,
+                        $inValue,
+                        $annotationReader,
+                        $symfonyContainer
+                        );
+            } else {
+                $value = $inValue;
+            }
         } elseif (is_array($inValue)) {
             //If the property if an array of Store, we create it
             $value = array();
             foreach ($inValue as $key => $item) {
-                    $value[$key] = static::unSerialize($item, $defaultClassNames);
+                $value[$key] = static::unSerialize($item, $defaultClassNames);
             }
-        } else $value = $inValue;
+        } else {
+            $value = $inValue;
+        }
 
         return $value;
     }
@@ -72,18 +78,25 @@ class StoreHelper
     /**
      * Create a class if exists and not abstract
      */
-    public static function createClass($class, $data, $annotationReader=null,
-                                       $symfonyContainer=null)
+    public static function createClass(
+            $class,
+            $data,
+            $annotationReader=null,
+            $symfonyContainer=null
+            )
     {
-        if (!class_exists($class)) return null;
+        if (!class_exists($class)) {
+            return null;
+        }
         $ref = new \ReflectionClass($class);
-        if ($ref->isAbstract()) return null;
+        if ($ref->isAbstract()) {
+            return null;
+        }
         $store =  new $class($data);
 
         if ($annotationReader) {
             $store->setAnnotationReader($annotationReader);
         }
-
         if ($symfonyContainer && $store instanceof ContainerAwareInterface) {
             $store->setContainer($symfonyContainer);
         }
@@ -104,14 +117,12 @@ class StoreHelper
     public static function getStoreClass($inValue, array $defaultClassName)
     {
         //Get the class inside the values
-        if ($inValue && isset($inValue->className) && class_exists($inValue->className)) {
+        if ($inValue && isset($inValue->className) && class_exists($inValue->className))
             return $inValue->className;
-        }
 
         //We take it from the array if there is only one
-        if (count($defaultClassName) == 1 && class_exists($defaultClassName[0])) {
+        if (count($defaultClassName) == 1 && class_exists($defaultClassName[0]))
             return $defaultClassName[0];
-        }
 
         return null;
     }

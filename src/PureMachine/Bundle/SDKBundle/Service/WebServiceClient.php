@@ -18,6 +18,7 @@ use PureMachine\Bundle\SDKBundle\Store\WebService\ArrayResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\ErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
+use PureMachine\Bundle\SDKBundle\Service\HttpHelper;
 use Symfony\Component\Validator\Validation;
 
 class WebServiceClient implements ContainerAwareInterface
@@ -63,10 +64,14 @@ class WebServiceClient implements ContainerAwareInterface
             $cacheDir = $this->getContainer()->getParameter("kernel.cache_dir")
                        .DIRECTORY_SEPARATOR . 'puremachine_annotations';
             $debug = $this->getContainer()->get('kernel')->isDebug();
-            $this->annotationReader = new FileCacheReader(new AnnotationReader(),
-                                                      $cacheDir,
-                                                      $debug);
-        } else $this->annotationReader = new AnnotationReader();
+            $this->annotationReader = new FileCacheReader(
+                    new AnnotationReader(),
+                    $cacheDir,
+                    $debug
+                    );
+        } else {
+            $this->annotationReader = new AnnotationReader();
+        }
 
         return $this->annotationReader;
     }
@@ -80,9 +85,9 @@ class WebServiceClient implements ContainerAwareInterface
     public function call($webServiceName, $inputData=null,
                               $version='V1')
     {
-        if ($this->container) {
-            //Create unique token to identify the call
-            $token = uniqid("CALL_");
+        //Create unique token to identify the call
+        $token = uniqid("CALL_");
+        if ($this->isSymfony()) {
             $eventDispatcher = $this->container->get("event_dispatcher");
         }
 
@@ -90,7 +95,7 @@ class WebServiceClient implements ContainerAwareInterface
          * Throw initial event before executing
          * the call, remote or local
          */
-        if ($this->container && $inputData instanceof BaseStore) {
+        if (($inputData instanceof BaseStore) && $this->isSymfony()) {
             $event = new WebServiceCallingEvent($token, $webServiceName, $inputData, $version);
             $eventDispatcher->dispatch("puremachine.webservice.calling", $event);
         }
@@ -106,7 +111,7 @@ class WebServiceClient implements ContainerAwareInterface
                  * Throw post event after executing
                  * the local call
                  */
-                if ($this->container && $return instanceof BaseStore) {
+                if (($return instanceof BaseStore) && $this->isSymfony()) {
                     $event = new WebServiceCalledEvent($token, $webServiceName, $return, $version, true);
                     $eventDispatcher->dispatch("puremachine.webservice.called", $event);
                 }
@@ -122,7 +127,7 @@ class WebServiceClient implements ContainerAwareInterface
          * Throw post event after executing
          * the local call
          */
-        if ($this->container && $return instanceof BaseStore) {
+        if (($return instanceof BaseStore) && $this->isSymfony()) {
             $event = new WebServiceCalledEvent($token, $webServiceName, $return, $version, false);
             $eventDispatcher->dispatch("puremachine.webservice.called", $event);
         }
@@ -159,29 +164,35 @@ class WebServiceClient implements ContainerAwareInterface
         }
 
         //Make the http call
-        if ($this->container)
+        if ($this->isSymfony()) {
             $http = $this->container->get('pure_machine.sdk.http_helper');
-        else $http = new HttpHelper();
-
-        $authenticationToken = null;
-        if ($this->login) {
-            $authenticationToken = $this->login . ":" . $this->password;
+        } else {
+            $http = new HttpHelper();
         }
 
-        $fullUrl = $http->getFullUrl($url, $inputData, 'POST', array(),
-                                     $authenticationToken);
+        list($login, $password) = $this->getCredentials();
+        $fullUrl = $http->getFullUrl($url, $inputData);
 
         try {
-            $response = $http->getJsonResponse($url, $inputData, 'POST', array(), $authenticationToken);
+            $response = $http->getJsonResponse(
+                    $url,
+                    $inputData,
+                    'POST',
+                    array(),
+                    $login . ":" . $password
+                    );
         } catch (HTTPException $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e, $fullUrl);
         }
 
         //Cast $inputValue if needed
         try {
-            $response = StoreHelper::unSerialize($response, array(),
-                                                 $this->getAnnotationReader(),
-                                                 $this->getContainer());
+            $response = StoreHelper::unSerialize(
+                    $response,
+                    array(),
+                    $this->getAnnotationReader(),
+                    $this->getContainer()
+                    );
             } catch (Exception $e) {
                 return $this->buildErrorResponse($webServiceName, $version, $e, $fullUrl);
         }
@@ -189,39 +200,49 @@ class WebServiceClient implements ContainerAwareInterface
         return $response;
     }
 
+    //FIXME: it's symfony2 specific. need to fix it.
     protected function buildRemoteUrl($webServiceName, $version)
     {
-        /**
-         * No symfony usecase
+        /*
+         * The namespaces can be achieved through the Symfony2
+         * container if defined, or as fallback through the configuration
+         * specified on the static class PureBilling
          */
-        if (!$this->container && $this->endPoint) {
-            return $this->endPoint ."/$version/$webServiceName";
-        }
-
-         if (!$this->container)
-            throw new WebServiceException("You need to pass the API enpoint using "
-                                         ."class contructor", WebServiceException::WS_005);
-
-        if (!$this->container->hasParameter('ws_namespaces'))
-            throw new WebServiceException("ws_namespaces is not defined in the"
-                                         ."configuration file", WebServiceException::WS_005);
-
-        $namespaces = $this->container->getParameter('ws_namespaces');
-        natsort($namespaces);
-
-        //Try to find the baseUrl
         $baseUrl = null;
-        foreach ($namespaces as $namespace => $url) {
-            if ($this->container->get('pure_machine.sdk.string_helper')
-                                ->startsWith($webServiceName, $namespace, false)) {
-                $baseUrl = $url;
-                break;
+        if ($this->isSymfony()) {
+            /*
+             * Symfony 2 calling
+             */
+            if (!$this->container->hasParameter('ws_namespaces')) {
+                $msg = "ws_namespaces is not defined in the configuration file";
+                throw new WebServiceException($msg, WebServiceException::WS_005);
             }
+            $namespaces = $this->container->getParameter('ws_namespaces');
+            $stringHelper = $this->container->get('pure_machine.sdk.string_helper');
+            natsort($namespaces);
+
+            foreach ($namespaces as $namespace => $url) {
+                if ($stringHelper->startsWith($webServiceName, $namespace, false)) {
+                    $baseUrl = $url;
+                    break;
+                }
+            }
+        } else {
+            /*
+             * Using fallback on static \PureBilling
+             * configuration
+             */
+            if (!\PureBilling::getEndPoint()) {
+                throw new WebServiceException('You need to pass the API enpoint using'
+                        ."class contructor", WebServiceException::WS_005);
+            }
+            $baseUrl = \PureBilling::getEndPoint();
         }
 
-        if (!$baseUrl)
+        if (!$baseUrl) {
             throw new WebServiceException("Can't find remote server in config for webService "
-                                         .$webServiceName, WebServiceException::WS_005);
+                                     .$webServiceName, WebServiceException::WS_005);
+        }
 
         return "$baseUrl/$version/$webServiceName";
     }
@@ -326,12 +347,16 @@ class WebServiceClient implements ContainerAwareInterface
     protected function buildResponse($webServiceName, $version, $data, $fullUrl=null, $status='success')
     {
         if ($status == 'success') {
-            if (is_array($data))
+            if (is_array($data)) {
                 $response = new ArrayResponse();
-            else $response = new Response();
-        } elseif ($this->container && $this->container->get('kernel')->getEnvironment() != 'prod')
+            } else {
+                $response = new Response();
+            }
+        } elseif ($this->container && $this->container->get('kernel')->getEnvironment() != 'prod') {
             $response = new DebugErrorResponse();
-        else $response = new ErrorResponse();
+        } else {
+            $response = new ErrorResponse();
+        }
 
         $response->setWebService($webServiceName);
         $response->setStatus($status);
@@ -369,6 +394,16 @@ class WebServiceClient implements ContainerAwareInterface
      */
     public function getCredentials()
     {
-        return array( $this->login, $this->password);
+        if (!$this->login) {
+            //Using static PureBilling as fallback
+            if (!\PureBilling::getPrivateKey()) {
+                throw new WebServiceException('Private key not defined or login not defined');
+            }
+
+            return array('api', \PureBilling::getPrivateKey());
+        } else {
+            return array( $this->login, $this->password);
+        }
+
     }
 }
