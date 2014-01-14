@@ -96,8 +96,11 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         /**
          * Entity resoliver (Entity annotation)
          */
-        if ($methodPrefix == 'get' && $propertyExists &&
-            substr($method, strlen($method)-6) == 'Entity') {
+        if ($this->container
+                && $methodPrefix == 'get'
+                && $propertyExists
+                && substr($method, strlen($method)-6) == 'Entity')
+        {
             return $this->resolveEntity($property);
         }
 
@@ -111,14 +114,16 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         /**
          * Entity synchronization (EntityMapping annotation)
          */
-        if ($methodPrefix == 'set') {
-            return $this->setEntityPropertyValue($method, $arguments, $property);
-        }
+        if ($this->container) {
+            if ($methodPrefix == 'set') {
+                return $this->setEntityPropertyValue($method, $arguments, $property);
+            }
 
-        //Get the value from the entity
-        //and define it to the store
-        if ($methodPrefix == 'get') {
-            return $this->setStorePropertyValueFromEntity($property, $arguments);
+            //Get the value from the entity
+            //and define it to the store
+            if ($methodPrefix == 'get') {
+                return $this->setStorePropertyValueFromEntity($property, $arguments);
+            }
         }
 
         return parent::__call($method, $arguments);
@@ -189,9 +194,8 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 
         if ($id instanceof BaseStore) $id = $id->getId();
 
-        if (array_key_exists($id, $this->entityCache)) {
+        if (array_key_exists($id, $this->entityCache))
                 return $this->entityCache[$id];
-        }
 
         if (!is_scalar($id))
             throw new StoreException("Can't resolve entity $propertyName. id is an " . gettype($id)
