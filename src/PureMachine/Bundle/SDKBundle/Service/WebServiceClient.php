@@ -232,7 +232,7 @@ class WebServiceClient implements ContainerAwareInterface
              * Using fallback on static \PureBilling
              * configuration
              */
-            if (!\PureBilling::getEndPoint()) {
+            if (!class_exists('\PureBilling') || !\PureBilling::getEndPoint()) {
                 throw new WebServiceException('You need to pass the API enpoint using'
                         ."class contructor", WebServiceException::WS_005);
             }
