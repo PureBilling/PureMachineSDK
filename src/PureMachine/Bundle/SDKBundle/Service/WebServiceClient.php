@@ -396,7 +396,7 @@ class WebServiceClient implements ContainerAwareInterface
     {
         if (!$this->login) {
             //Using static PureBilling as fallback
-            if (!\PureBilling::getPrivateKey()) {
+            if (!class_exists('\PureBilling') || !\PureBilling::getPrivateKey()) {
                 throw new WebServiceException('Private key not defined or login not defined');
             }
 
