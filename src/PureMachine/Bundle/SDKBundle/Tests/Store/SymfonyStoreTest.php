@@ -22,7 +22,9 @@ class SymfonyStoreTest extends WebTestCase
      */
     public function testSymfonyStore()
     {
+        $symfony = static::createClient();
         $store = new DoctrineSToreTest();
+        $store->setContainer($symfony->getContainer());
         $schema = $store->getJsonSchema();
         $entity = new FakeEntity();
         $entity->setId('test');
@@ -46,6 +48,7 @@ class SymfonyStoreTest extends WebTestCase
 
         //Test attaching entity to new store
         $store2 = new DoctrineStoreTest();
+        $store2->setContainer($symfony->getContainer());
         $store2->setId('test');
         $store2->setEntity($entity);
 

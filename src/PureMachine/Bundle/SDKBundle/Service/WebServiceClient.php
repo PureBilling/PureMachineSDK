@@ -18,7 +18,6 @@ use PureMachine\Bundle\SDKBundle\Store\WebService\ArrayResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\ErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
-use PureMachine\Bundle\SDKBundle\Service\HttpHelper;
 use Symfony\Component\Validator\Validation;
 
 class WebServiceClient implements ContainerAwareInterface
@@ -209,14 +208,7 @@ class WebServiceClient implements ContainerAwareInterface
          * specified on the static class PureBilling
          */
         $baseUrl = null;
-        if ($this->isSymfony()) {
-            /*
-             * Symfony 2 calling
-             */
-            if (!$this->container->hasParameter('ws_namespaces')) {
-                $msg = "ws_namespaces is not defined in the configuration file";
-                throw new WebServiceException($msg, WebServiceException::WS_005);
-            }
+        if ($this->isSymfony() && $this->container->hasParameter('ws_namespaces')) {
             $namespaces = $this->container->getParameter('ws_namespaces');
             $stringHelper = $this->container->get('pure_machine.sdk.string_helper');
             natsort($namespaces);
@@ -232,11 +224,15 @@ class WebServiceClient implements ContainerAwareInterface
              * Using fallback on static \PureBilling
              * configuration
              */
-            if (!class_exists('\PureBilling') || !\PureBilling::getEndPoint()) {
-                throw new WebServiceException('You need to pass the API enpoint using'
+            if ($this->endPoint) {
+                $baseUrl = $this->endPoint;
+            } elseif (!class_exists('\PureBilling') || \PureBilling::getEndPoint()) {
+                $baseUrl = \PureBilling::getEndPoint();
+            } else {
+                throw new WebServiceException('You need to pass the API enpoint using '
                         ."class contructor", WebServiceException::WS_005);
             }
-            $baseUrl = \PureBilling::getEndPoint();
+
         }
 
         if (!$baseUrl) {
@@ -394,16 +390,11 @@ class WebServiceClient implements ContainerAwareInterface
      */
     public function getCredentials()
     {
-        if (!$this->login) {
-            //Using static PureBilling as fallback
-            if (!class_exists('\PureBilling') || !\PureBilling::getPrivateKey()) {
-                throw new WebServiceException('Private key not defined or login not defined');
-            }
+        if ($this->login) return array( $this->login, $this->password);
 
+        //Using static PureBilling as fallback
+        if (class_exists('\PureBilling') && \PureBilling::getPrivateKey()) {
             return array('api', \PureBilling::getPrivateKey());
-        } else {
-            return array( $this->login, $this->password);
         }
-
     }
 }
