@@ -132,4 +132,17 @@ class HttpHelper
 
         return $json;
     }
+
+    public function addGetParametersToUrl($url, $parameters)
+    {
+        $frag = parse_url($url);
+        $queryStringArray = array();
+
+        if (isset($frag['query'])) {
+            parse_str($frag['query'], $queryStringArray);
+        }
+
+        $queryString = http_build_query(array_merge($queryStringArray, $parameters));
+        return $frag['scheme']. '://' . $frag['host']. $frag['path'] ."?" . $queryString;
+    }
 }
