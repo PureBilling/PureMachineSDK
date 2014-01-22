@@ -39,6 +39,8 @@ abstract class BaseStore implements JsonSerializable
      * @Assert\NotBlank
      */
     protected $className;
+    
+    public function setClassName($class){}
 
     /**
      * Create a stoe Object
