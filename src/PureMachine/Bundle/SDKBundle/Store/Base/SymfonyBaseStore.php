@@ -94,7 +94,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         $propertyExists = property_exists($this, $property);
 
         /**
-         * Entity resoliver (Entity annotation)
+         * Entity resolver (Entity annotation)
          */
         if ($this->container
                 && $methodPrefix == 'get'
@@ -194,7 +194,13 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
     {
         $id = $this->$propertyName;
 
-        if ($id instanceof BaseStore) $id = $id->getId();
+        try {
+            if ($id instanceof BaseStore) $id = $id->getId();
+        } catch(\Exception $e) {
+            return null;
+        }
+        
+        if (!$id) return null;
 
         if (array_key_exists($id, $this->entityCache))
                 return $this->entityCache[$id];
