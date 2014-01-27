@@ -34,6 +34,27 @@ class HttpHelper
     public function getJsonResponse($url, $data, $method='POST',
                                  $headers=array(), $authenticationToken=null)
     {
+        $output = $this->getResponse($url, $data, $method, $headers, $authenticationToken);
+        $json = json_decode($output);
+
+        if ($json == null) {
+            $getUrl = $this->getFullUrl($url, $data);
+            $errorMessage = "can't decode JSON output";
+            $e = new HTTPException($errorMessage);
+            $e->addMessage('json decoder error', json_last_error());
+            $e->addMessage('Ouptut', $output);
+            $e->addMessage('called URL', $url);
+            $e->addMessage('debug URL (rebuilded)', $getUrl);
+            $e->addMessage('data sent:', $data);
+            throw $e;
+        }
+
+        return $json;
+    }
+
+    public function getResponse($url, $data, $method='POST',
+                                $headers=array(), $authenticationToken=null)
+    {
         $log = $this->log;
 
         if ($log) $log->getTitle("call: $url");
@@ -117,20 +138,7 @@ class HttpHelper
             throw $e;
         }
 
-        $json = json_decode($output);
-
-        if ($json == null) {
-            $errorMessage = "can't decode JSON output";
-            $e = new HTTPException($errorMessage);
-            $e->addMessage('json decoder error', json_last_error());
-            $e->addMessage('Ouptut', $output);
-            $e->addMessage('called URL', $url);
-            $e->addMessage('debug URL (rebuilded)', $getUrl);
-            $e->addMessage('data sent:', $data);
-            throw $e;
-        }
-
-        return $json;
+        return $output;
     }
 
     public function addGetParametersToUrl($url, $parameters)
@@ -143,6 +151,7 @@ class HttpHelper
         }
 
         $queryString = http_build_query(array_merge($queryStringArray, $parameters));
+
         return $frag['scheme']. '://' . $frag['host']. $frag['path'] ."?" . $queryString;
     }
 }
