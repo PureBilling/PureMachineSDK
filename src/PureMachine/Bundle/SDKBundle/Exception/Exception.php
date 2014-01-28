@@ -74,4 +74,9 @@ class Exception extends \Exception
     {
         $this->exceptionStore->addMessage($key, $value);
     }
+
+    public function getErrorCode()
+    {
+        return $this->exceptionStore->getCode();
+    }
 }

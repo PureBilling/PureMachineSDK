@@ -196,10 +196,10 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 
         try {
             if ($id instanceof BaseStore) $id = $id->getId();
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return null;
         }
-        
+
         if (!$id) return null;
 
         if (array_key_exists($id, $this->entityCache))

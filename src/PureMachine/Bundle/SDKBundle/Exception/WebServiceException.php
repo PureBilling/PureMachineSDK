@@ -2,6 +2,7 @@
 namespace PureMachine\Bundle\SDKBundle\Exception;
 
 use PureMachine\Bundle\SDKBundle\Store\WebService\Response;
+use PureMachine\Bundle\SDKBundle\Exception\Exception as PMException;
 
 class WebServiceException extends Exception
 {
@@ -34,7 +35,7 @@ class WebServiceException extends Exception
                 foreach($stack as $line) print "$line\n";
             }
 
-            throw new \Exception($answer->getAnswer()->getCompleteMessage());
+            throw new PMException($answer->getAnswer()->getCompleteMessage(), $answer->getAnswer()->getCode());
         }
     }
 }
