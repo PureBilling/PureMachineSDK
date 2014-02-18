@@ -307,7 +307,11 @@ class WebServiceClient implements ContainerAwareInterface
                           .get_class($value);
 
                 $propertyAssesor = "get" . ucfirst($property);
-                $propValue = $value->$propertyAssesor();
+
+                if (property_exists($value, $propertyAssesor)) {
+                    $propValue = $value->$propertyAssesor();
+                } else $propValue = '?';
+
                 $message .= ". value(type:" .gettype($propValue). ")";
                 if (is_scalar($propValue)) $message .= "='$propValue'";
                 throw new WebServiceException($message, $errorCode);

@@ -87,7 +87,8 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 
         $property = $this->getPropertyFromMethod($method);
         if (!$this->isStoreProperty($property)) {
-            throw new \Exception("$method() method does not exits in " . get_class($this));
+            $e =  new \Exception("property {$property} (from method $method() ) does not exists in " . get_class($this));
+            print $e->getTraceAsString();
         }
 
         $methodPrefix = substr($method,0,3);
