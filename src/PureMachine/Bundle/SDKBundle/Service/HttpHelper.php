@@ -55,7 +55,7 @@ class HttpHelper
     public function getResponse($url, $data=array(), $method='POST',
                                 $headers=array(), $authenticationToken=null)
     {
-        $data2 = ['json' => json_encode($data)];
+        $data2 = array('json' => json_encode($data));
 
         return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken);
     }
