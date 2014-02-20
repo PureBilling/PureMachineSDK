@@ -24,14 +24,14 @@ class HttpHelper
         return $this->log;
     }
 
-    public function getFullUrl($url, $data)
+    private function getFullUrl($url, $data)
     {
         $urlParameters = "json=" . json_encode($data);
 
         return "$url?$urlParameters";
     }
 
-    public function getJsonResponse($url, $data, $method='POST',
+    public function getJsonResponse($url, $data=array(), $method='POST',
                                  $headers=array(), $authenticationToken=null)
     {
         $output = $this->getResponse($url, $data, $method, $headers, $authenticationToken);
@@ -52,37 +52,41 @@ class HttpHelper
         return $json;
     }
 
-    public function getResponse($url, $data, $method='POST',
+    public function getResponse($url, $data=array(), $method='POST',
+                                $headers=array(), $authenticationToken=null)
+    {
+        $data2 = ['json' => json_encode($data)];
+
+        return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken);
+    }
+
+    public function httpRequest($url, $data, $method='POST',
                                 $headers=array(), $authenticationToken=null)
     {
         $log = $this->log;
+        $ch = curl_init();
+
+        if ($method == 'GET') {
+                $url = $this->addGetParametersToUrl($url, $data);
+        } elseif ($method == 'POST') {
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        }
 
         if ($log) $log->getTitle("call: $url");
-
-        $urlParameters = "json=" . json_encode($data);
-        $getUrl = $this->getFullUrl($url, $data);
 
         if ($log) {
             $log->addMessage('method', $method);
             $log->addMessage('called URL', $url);
             $log->addMessage("$method values", json_encode($data));
-            $log->addMessage('debug URL (rebuilded)', $getUrl);
         }
 
-        $ch = curl_init();
-
-        if (($method == 'POST')) {
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $urlParameters);
-        } else {
-            curl_setopt($ch, CURLOPT_URL, $getUrl);
-        }
-
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch,CURLOPT_USERAGENT,'PureMachine HttpHelpers:getJsonAnswer');
+        curl_setopt($ch, CURLOPT_USERAGENT, 'PureMachine HttpHelpers:getJsonAnswer');
 
         if ($authenticationToken) {
             curl_setopt($ch, CURLOPT_USERPWD, $authenticationToken);
@@ -101,7 +105,6 @@ class HttpHelper
             $e = new HTTPException($message);
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
-            $e->addMessage('debug URL (rebuilded)', $getUrl);
             $e->addMessage('data sent:', $data);
             throw $e;
         }
@@ -112,7 +115,6 @@ class HttpHelper
                                   HTTPException::HTTP_404);
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
-            $e->addMessage('debug URL (rebuilded)', $getUrl);
             $e->addMessage('data sent:', $data);
             throw $e;
         }
@@ -123,7 +125,6 @@ class HttpHelper
                                    HTTPException::HTTP_401);
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
-            $e->addMessage('debug URL (rebuilded)', $getUrl);
             $e->addMessage('data sent:', $data);
             throw $e;
         }
@@ -133,7 +134,6 @@ class HttpHelper
             $e = new HTTPException($errorMessage);
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
-            $e->addMessage('debug URL (rebuilded)', $getUrl);
             $e->addMessage('data sent:', $data);
             throw $e;
         }
