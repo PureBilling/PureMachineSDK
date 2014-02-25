@@ -153,7 +153,6 @@ class HttpHelper
         $queryString = http_build_query(array_merge($queryStringArray, $parameters));
 
         if (!array_key_exists('path', $frag)) $frag['path'] = "";
-
         return $frag['scheme']. '://' . $frag['host']. $frag['path'] ."?" . $queryString;
     }
 }

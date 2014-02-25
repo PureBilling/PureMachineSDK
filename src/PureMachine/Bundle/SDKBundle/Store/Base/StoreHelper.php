@@ -117,8 +117,8 @@ class StoreHelper
     public static function getStoreClass($inValue, array $defaultClassName)
     {
         //Get the class inside the values
-        if ($inValue && isset($inValue->className) && class_exists($inValue->className))
-            return $inValue->className;
+        if ($inValue && isset($inValue->_className) && class_exists($inValue->_className))
+            return $inValue->_className;
 
         //We take it from the array if there is only one
         if (count($defaultClassName) == 1 && class_exists($defaultClassName[0]))

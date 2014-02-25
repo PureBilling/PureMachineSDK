@@ -36,9 +36,9 @@ class StoreHelperTest extends WebTestCase
         $input = (object) [
             'store' => (object) [
                 'titleA' => 'fooA',
-                'className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA',
+                '_className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA',
             ],
-            'className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreAB',
+            '_className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreAB',
         ];
 
         $unserializedItem = StoreHelper::unSerialize(
@@ -62,9 +62,9 @@ class StoreHelperTest extends WebTestCase
         $input = (object) [
             'store' => (object) [
                 'titleB' => 'fooB',
-                'className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreB',
+                '_className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreB',
             ],
-            'className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreAB',
+            '_className' => 'PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreAB',
         ];
 
         $unserializedItem = StoreHelper::unSerialize(

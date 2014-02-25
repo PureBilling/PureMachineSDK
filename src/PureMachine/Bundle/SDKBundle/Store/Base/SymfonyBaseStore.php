@@ -208,7 +208,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
 
         if (!is_scalar($id))
             throw new StoreException("Can't resolve entity $propertyName. id is an " . gettype($id)
-                                     ." for " .$this->getClassName().".$propertyName ");
+                                     ." for " .$this->get_className().".$propertyName ");
 
         $schema = static::getJsonSchema();
 
@@ -216,7 +216,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         if (!$id) return $id;
         if (!isset($schema->definition->$propertyName->entity)) {
             throw new StoreException("to use entity resolution with "
-                                    .$this->getClassName().".$propertyName "
+                                    .$this->get_className().".$propertyName "
                                     ."You need to add @Entity annotation",
                                      StoreException::STORE_004);
         }
@@ -225,7 +225,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         if ($repository == 'auto') {
             //Check if the entity manager has been defined
             if (!$this->container)
-                throw new StoreException("To resolve ".$this->getClassName()
+                throw new StoreException("To resolve ".$this->get_className()
                                          .".$propertyName as entity, you need "
                                          ."to define the symfony container using "
                                          ."setContainer() method",
@@ -248,7 +248,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         if ($repository == 'auto')
             throw new StoreException("You need to define a valid repository "
                                     ."for "
-                                    .$this->getClassName()
+                                    .$this->get_className()
                                     .".$propertyName in @Entity annotation ",
                                      StoreException::STORE_004);
 

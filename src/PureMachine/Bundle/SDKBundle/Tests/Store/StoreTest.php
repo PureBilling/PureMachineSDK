@@ -23,7 +23,7 @@ class StoreTest extends WebTestCase
     public function testAutoSetterGetter()
     {
         $store = new StoreClass\TestStore();
-        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\TestStore', $store->getClassName());
+        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\TestStore', $store->get_className());
 
         //Try to access to a public property defined a property
         $store->setTestProperty('test');

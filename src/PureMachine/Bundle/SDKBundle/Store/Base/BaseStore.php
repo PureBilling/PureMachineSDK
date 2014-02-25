@@ -38,9 +38,9 @@ abstract class BaseStore implements JsonSerializable
      * @Assert\Type("string")
      * @Assert\NotBlank
      */
-    protected $className;
+    protected $_className;
 
-    public function setClassName($class) {}
+    public function set_className($class) {}
 
     /**
      * Create a stoe Object
@@ -49,7 +49,7 @@ abstract class BaseStore implements JsonSerializable
      */
     public function __construct($data=null)
     {
-        $this->className = get_class($this);
+        $this->_className = get_class($this);
 
         if (!$data) {
             $data = array();
@@ -299,7 +299,7 @@ abstract class BaseStore implements JsonSerializable
         self::$jsonSchema[$class] = new \stdClass();
         self::$jsonSchema[$class]->definition = (object) $definition;
         self::$jsonSchema[$class]->configuration = new \stdClass();
-        self::$jsonSchema[$class]->configuration->className = $class;
+        self::$jsonSchema[$class]->configuration->_className = $class;
 
         return self::$jsonSchema[$class];
     }
