@@ -301,4 +301,21 @@ class StoreTest extends WebTestCase
 
     }
 
+    /**
+     * @code
+     * phpunit -v --filter testDateTimeSettingAsIntegerValue -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testDateTimeSettingAsIntegerValue()
+    {
+        $newRef = new \DateTime("now");
+        $unixTimestamp = $newRef->format("U");
+        $sampleStore = new StoreDateTime();
+        $sampleStore->setValue($unixTimestamp);
+
+        $fetchedDateTime = $sampleStore->getValue();
+        $this->assertTrue($fetchedDateTime instanceof \DateTime);
+        $this->assertEquals($unixTimestamp, $fetchedDateTime->format("U"));
+    }
+
 }
