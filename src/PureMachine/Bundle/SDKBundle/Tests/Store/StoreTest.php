@@ -287,6 +287,18 @@ class StoreTest extends WebTestCase
         $fetchedValue = $sampleStore->getValue();
         $this->assertTrue($fetchedValue instanceof \DateTime);
         $this->assertEquals($newRef->format("U"), $fetchedValue->format("U"));
+
+        //Trying to construct a negative timestamp
+        try {
+            $sampleStore = new StoreDateTime(array(
+                "value" => -1,
+            ));
+
+            $this->assertTrue(false);
+        } catch (\Exception $e) {
+            $this->assertTrue(true);
+        }
+
     }
 
 }
