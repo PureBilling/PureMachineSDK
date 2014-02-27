@@ -48,7 +48,7 @@ class StoreTest extends WebTestCase
         $schema = $store->getJsonSchema()->definition;
 
         $this->assertEquals(7, count((array) $schema));
-        $this->assertEquals(4, count((array) $schema->testProperty));
+        $this->assertEquals(5, count((array) $schema->testProperty));
         $this->assertEquals('string', $schema->testProperty->type);
         $this->assertEquals('testProperty', $schema->testProperty->description);
 

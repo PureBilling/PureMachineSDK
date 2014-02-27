@@ -125,6 +125,19 @@ abstract class BaseStore implements JsonSerializable
                 $value = StoreHelper::serialize($valueFromMethod, $includePrivate);
                 $answer[$property] = $value;
             }
+
+            /**
+             * Add aliases
+             */
+            if ($definition->alias) {
+                $alias = $definition->alias;
+                $method = 'get' . ucfirst($alias);
+                if (method_exists($this, $method)) {
+                    $answer[$alias] = $this->$method();
+                } else {
+                    $answer[$alias] = $answer[$property];
+                }
+            }
         }
 
         return (object) $answer;
@@ -139,8 +152,22 @@ abstract class BaseStore implements JsonSerializable
     {
         //Force conversion to array
         if (is_object($data)) $data = (array) $data;
-
         $schema = $this->getJsonSchema();
+
+        /*
+        * Alias management
+        */
+        foreach ($schema->definition as $property => $definition) {
+            $alias = $definition->alias;
+            if ($alias && array_key_exists($alias, $data)) {
+                $method = 'set' . ucfirst($alias);
+                if (method_exists($this, $method)) {
+                 $data[$property] = $this->$method($data[$alias]);
+                } else {
+                    $data[$property] = $data[$alias];
+                }
+            }
+        }
 
         /**
          * Initialize data
@@ -148,7 +175,10 @@ abstract class BaseStore implements JsonSerializable
          */
 
         foreach ($schema->definition as $property => $definition) {
-            if(!$this->isStoreProperty($property)) continue;
+            if (!$this->isStoreProperty($property)) {
+                $missingProperties[$property] = $data[$property];
+                continue;
+            }
             //Find the value if there is one.
             if (array_key_exists($property, $data))
                 $value = $data[$property];
@@ -268,6 +298,9 @@ abstract class BaseStore implements JsonSerializable
                         throw new StoreException("$method(\$value) takes 1 argument.",
                             StoreException::STORE_005);
                     }
+                } else {
+                    //SomeTime, the property does not exists, but a setter has been
+                    //defined. It's usually used for initialize a store with non compatible data
                 }
                 break;
            case 'add':
@@ -325,6 +358,7 @@ abstract class BaseStore implements JsonSerializable
                 if ($annotation instanceof Store\Property) {
                     $definition[$prop->getName()]->description = $annotation->description;
                     $definition[$prop->getName()]->private = $annotation->private;
+                    $definition[$prop->getName()]->alias = $annotation->alias;
                 } elseif ($annotation instanceof Store\StoreClass) {
                     $definition[$prop->getName()]->storeClasses = (array) $annotation->value;
                 } elseif ($annotation instanceof Assert\Type) {
