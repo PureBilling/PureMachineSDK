@@ -25,15 +25,17 @@ class StoreHelper
 
     public static function serialize($inValue, $includePrivate=false)
     {
-        if ($inValue instanceof BaseStore) return $inValue->serialize($includePrivate);
+        if ($inValue instanceof BaseStore) {
+            return $inValue->serialize($includePrivate);
+        }
 
         if (is_array($inValue)) {
-                $value = array();
-                foreach ($inValue as $key => $item) {
-                        $value[$key] = static::serialize($item);
-                }
+            $value = array();
+            foreach ($inValue as $key => $item) {
+                $value[$key] = static::serialize($item);
+            }
 
-                return $value;
+            return $value;
         }
 
         return $inValue;
