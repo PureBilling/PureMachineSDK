@@ -24,7 +24,7 @@ class HttpHelper
         return $this->log;
     }
 
-    private function getFullUrl($url, $data)
+    public function getFullUrl($url, $data)
     {
         $urlParameters = "json=" . json_encode($data);
 

@@ -220,7 +220,12 @@ abstract class BaseStore implements JsonSerializable
                         //Checking the definition of the property
                         switch ($propertyDefinition->type) {
                             case 'datetime':
-                                return new DateTime("@".$this->$property);
+                                if (is_numeric($this->$property)) {
+                                    return new DateTime("@".$this->$property);
+                                    break;
+                                }
+
+                                return null;
                                 break;
                         }
                     }
@@ -249,6 +254,12 @@ abstract class BaseStore implements JsonSerializable
                             switch ($propertyDefinition->type) {
                                 case 'datetime':
                                     $valueToSet = $arguments[0];
+                                    if (is_numeric($valueToSet) && ($valueToSet>0)) {
+                                        //Auto conversion for numeric values into datetime as Unix timestamp
+                                        $this->$property = (int) $valueToSet;
+
+                                        return $this;
+                                    }
                                     if (!$valueToSet instanceof DateTime) {
                                         throw new StoreException("$method(\$value) only accepts DateTime as input date.",
                                             StoreException::STORE_005);
