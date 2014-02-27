@@ -5,9 +5,9 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Constraints as Assert;
-
 use PureMachine\Bundle\SDKBundle\Exception\StoreException;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
+use DateTime;
 
 /**
  * Base class for store that does not have modifiedProperties system
@@ -110,8 +110,19 @@ abstract class BaseStore implements JsonSerializable
         foreach ($schema->definition as $property => $definition) {
             $method = 'get' . ucfirst($property);
 
+            //Checking special types
             if ($definition->private == false || $includePrivate) {
-                $value = StoreHelper::serialize($this->$method(), $includePrivate);
+
+                $valueFromMethod = $this->$method();
+
+                if (isset($definition->type)) {
+                    switch ($definition->type) {
+                        case "datetime":
+                            $valueFromMethod = $this->$property; //Integer value
+                            break;
+                    }
+                }
+                $value = StoreHelper::serialize($valueFromMethod, $includePrivate);
                 $answer[$property] = $value;
             }
         }
@@ -178,6 +189,8 @@ abstract class BaseStore implements JsonSerializable
      */
     public function __call($method, $arguments)
     {
+        $class = get_called_class();
+
         //If function exists, we always call it.
         if (method_exists($this, $method)) {
             return call_user_func_array(array($this,$method),$arguments);
@@ -192,38 +205,83 @@ abstract class BaseStore implements JsonSerializable
         $methodPrefix = substr($method,0,3);
         $propertyExists = property_exists($this, $property);
 
+        //Retrieving definition
+        $jsonSchema = self::$jsonSchema[$class];
+        if (isset($jsonSchema->definition->$property)) {
+            $propertyDefinition = $jsonSchema->definition->$property;
+        }
+
         switch ($methodPrefix) {
             case 'get':
                 if ($propertyExists) {
+
+                    //Special retrieving of properties
+                    if (isset($propertyDefinition) && isset($propertyDefinition->type)) {
+                        //Checking the definition of the property
+                        switch ($propertyDefinition->type) {
+                            case 'datetime':
+                                return new DateTime("@".$this->$property);
+                                break;
+                        }
+                    }
+
                     //Without arguments
-                    if (count($arguments) == 0) return $this->$property;
-                    //With one argument
-                    elseif (count($arguments) == 1) {
+                    if (count($arguments) == 0) {
+                        return $this->$property;
+                    } elseif (count($arguments) == 1) { //With one argument
                         $prop = &$this->$property;
 
                         return $prop[$arguments[0]];
-                    } else throw new StoreException("$method(\$key=null) take 0 or 1 arguments.",
-                                                    StoreException::STORE_005);
+                    } else {
+                        throw new StoreException("$method(\$key=null) take 0 or 1 arguments.",
+                            StoreException::STORE_005);
+                    }
                 }
                 break;
             case 'set':
+
                 if ($propertyExists) {
                     if (count($arguments) == 1) {
+
+                        //Special setting of properties
+                        if (isset($propertyDefinition) && isset($propertyDefinition->type)) {
+                            //Checking the definition of the property
+                            switch ($propertyDefinition->type) {
+                                case 'datetime':
+                                    $valueToSet = $arguments[0];
+                                    if (!$valueToSet instanceof DateTime) {
+                                        throw new StoreException("$method(\$value) only accepts DateTime as input date.",
+                                            StoreException::STORE_005);
+                                    }
+                                    //Set the value as unix timestamp
+                                    $this->$property = (int) $valueToSet->format("U");
+
+                                    return $this;
+                                    break;
+                            }
+                        }
+
                         $this->$property = $arguments[0];
 
                         return $this;
-                    } else throw new StoreException("$method(\$value) takes 1 argument.",
-                                                    StoreException::STORE_005);
+                    } else {
+                        throw new StoreException("$method(\$value) takes 1 argument.",
+                            StoreException::STORE_005);
+                    }
                 }
                 break;
            case 'add':
                //FIXME: Change tracking does not support array addition or deletion.
                if ($propertyExists) {
                    $arrayToAdd = &$this->$property;
-                   if (count($arguments) == 1) $arrayToAdd[] = $arguments[0];
-                   elseif (count($arguments) == 2) $arrayToAdd[$arguments[1]] = $arguments[0];
-                   else throw new StoreException("$method(\$value, \$key=null) take 1 or two arguments.",
-                                                 StoreException::STORE_005);
+                   if (count($arguments) == 1) {
+                       $arrayToAdd[] = $arguments[0];
+                   } elseif (count($arguments) == 2) {
+                       $arrayToAdd[$arguments[1]] = $arguments[0];
+                   } else {
+                       throw new StoreException("$method(\$value, \$key=null) take 1 or two arguments.",
+                           StoreException::STORE_005);
+                   }
                }
 
                return $this;
@@ -403,15 +461,21 @@ abstract class BaseStore implements JsonSerializable
     protected function getPropertyFromMethod($method)
     {
         //If the method ends with Entity, we remove it
-        if (substr($method, strlen($method)-6) == 'Entity')
-                $method = substr($method,0, strlen($method)-6);
+        if (substr($method, strlen($method)-6) == 'Entity') {
+            $method = substr($method,0, strlen($method)-6);
+        }
 
         //Try with first letter as lowerCase
         $property = lcfirst(substr($method,3));
-        if (property_exists($this, $property)) return $property;
+        if (property_exists($this, $property)) {
+            return $property;
+        }
 
         //if does not exists, return without changing lowercase
-        if (property_exists($this, substr($method,3))) return substr($method,3);
+        if (property_exists($this, substr($method,3))) {
+            return substr($method,3);
+        }
+
         return $property;
     }
 
