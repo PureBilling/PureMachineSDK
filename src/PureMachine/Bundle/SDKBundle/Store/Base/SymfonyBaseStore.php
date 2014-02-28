@@ -140,8 +140,7 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         $propSchema = static::getJsonSchema()->definition
                                              ->$property;
         $getter = "get" . ucfirst($property);
-
-        if (!isset($propSchema->entityMapping)) {
+        if (!isset($propSchema->entityMapping) || !is_null($this->$property)) {
             return parent::__call($getter, $arguments);
         }
 
@@ -164,15 +163,17 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
     protected function setEntityPropertyValue($method, $arguments, $property)
     {
         parent::__call($method, $arguments);
+
         $value = $this->$property;
 
-        if (!$this->isStoreProperty($property))
+        if (!$this->isStoreProperty($property)) {
             return $this;
+        }
 
-        $propSchema = static::getJsonSchema()->definition
-                                             ->$property;
-        if (!isset($propSchema->entityMapping))
+        $propSchema = static::getJsonSchema()->definition->$property;
+        if (!isset($propSchema->entityMapping)) {
             return $this;
+        }
 
         $entityMapping = $propSchema->entityMapping;
         $mappings = explode('.', $entityMapping);
