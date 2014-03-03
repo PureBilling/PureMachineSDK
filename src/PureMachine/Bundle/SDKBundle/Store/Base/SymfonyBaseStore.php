@@ -151,7 +151,10 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
             foreach ($mappings as $mapping) {
                 $entityGetter = "get" . ucfirst($mapping);
                 $entity = $entity->$entityGetter();
-                if (!$entity) return parent::__call($getter, $arguments);
+                if (!$entity) {
+                    return parent::__call($getter, $arguments);
+
+                }
             }
             $setter = "set" . ucfirst($property);
             parent::__call($setter, array($entity));

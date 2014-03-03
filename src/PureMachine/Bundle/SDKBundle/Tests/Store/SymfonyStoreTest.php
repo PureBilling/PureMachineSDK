@@ -59,7 +59,11 @@ class SymfonyStoreTest extends WebTestCase
 
         //change entity value
         $entity->setTitle('new Title');
-        $this->assertEquals($entity->getTitle(), $store->getTitle());
-        $this->assertEquals($entity->getTitle(), $store2->getTitle());
+
+        //Previous Store is mapped on the same entity, but a previous value has been set
+        // (by setter, or with a set)
+        //this previous value is returned, not the store one
+        $this->assertEquals('test Title', $store2->getTitle());
+        $this->assertEquals('test Title', $store->getTitle());
     }
 }
