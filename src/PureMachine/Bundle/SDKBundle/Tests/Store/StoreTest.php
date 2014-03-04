@@ -2,6 +2,8 @@
 
 namespace PureMachine\Bundle\SDKBundle\Tests\Store;
 
+use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA;
+use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreInStore;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreDateTime;
 use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\ComposedStore;
@@ -318,4 +320,27 @@ class StoreTest extends WebTestCase
         $this->assertEquals($unixTimestamp, $fetchedDateTime->format("U"));
     }
 
+    /**
+     * @code
+     * phpunit -v --filter testArrayAsObject -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testArrayAsObject()
+    {
+        /**
+         * Classical case
+         */
+        $data = array();
+        $data['storeA'] = (object) array('titleA' => 'test title');
+        $store = new StoreInStore($data);
+        $this->assertTrue($store->getStoreA() instanceof StoreA);
+
+        /**
+         * object sent as array, not as stdClass
+         */
+        $data = array();
+        $data['storeA'] = array('titleA' => 'test title');
+        $store = new StoreInStore($data);
+        $this->assertTrue($store->getStoreA() instanceof StoreA);
+    }
 }

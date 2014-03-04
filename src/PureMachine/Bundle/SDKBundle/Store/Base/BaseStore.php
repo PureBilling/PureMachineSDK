@@ -188,6 +188,15 @@ abstract class BaseStore implements JsonSerializable
             }
 
             /**
+             * if we receive a array, but it's defined as object, we convert it
+             * If not, the cast to Store is not done
+             */
+            if ($definition->type == 'object' && is_array($value)) {
+                $value = (object) $value;
+                $data[$property] = $value;
+            }
+
+            /**
              * unSerialize Value
              * Note that we unSerialize when $value is null in order to
              * create Store composed class if there is.
