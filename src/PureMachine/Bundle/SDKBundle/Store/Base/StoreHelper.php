@@ -68,6 +68,16 @@ class StoreHelper
             //If the property if an array of Store, we create it
             $value = array();
             foreach ($inValue as $key => $item) {
+
+                /**
+                 * array of store case.
+                 * But if we recieve store as array (array in array),
+                 * we convert it to object
+                 */
+                if (count($defaultClassNames) >0 && is_array($item)) {
+                    $item = (object) $item;
+                }
+
                 $value[$key] = static::unSerialize($item, $defaultClassNames);
             }
         } else {

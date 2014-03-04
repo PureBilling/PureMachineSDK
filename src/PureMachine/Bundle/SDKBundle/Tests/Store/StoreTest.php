@@ -327,20 +327,29 @@ class StoreTest extends WebTestCase
      */
     public function testArrayAsObject()
     {
+        $storeAData = array('titleA' => 'test title');
         /**
          * Classical case
          */
         $data = array();
-        $data['storeA'] = (object) array('titleA' => 'test title');
+        $data['storeA'] = (object) $storeAData;
+        $data['storesA'] = array();
+        $data['storesA'][] = (object) $storeAData;
         $store = new StoreInStore($data);
         $this->assertTrue($store->getStoreA() instanceof StoreA);
+        $storesA = $store->getStoresA();
+        $this->assertTrue($storesA[0] instanceof StoreA);
 
         /**
          * object sent as array, not as stdClass
          */
         $data = array();
         $data['storeA'] = array('titleA' => 'test title');
+        $data['storesA'] = array();
+        $data['storesA'][] = $storeAData;
         $store = new StoreInStore($data);
         $this->assertTrue($store->getStoreA() instanceof StoreA);
+        $storesA = $store->getStoresA();
+        $this->assertTrue($storesA[0] instanceof StoreA);
     }
 }

@@ -14,4 +14,11 @@ class StoreInStore extends BaseStore
      * @Store\StoreClass({"PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA"})
      */
     protected $storeA;
+
+    /**
+     * @Store\Property(description="store in store")
+     * @Assert\Type("array")
+     * @Store\StoreClass({"PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA"})
+     */
+    protected $storesA;
 }
