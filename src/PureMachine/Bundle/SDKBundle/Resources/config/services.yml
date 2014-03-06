@@ -7,6 +7,8 @@ services:
 
     pure_machine.sdk.http_helper:
         class: PureMachine\Bundle\SDKBundle\Service\HttpHelper
+        calls:
+          - [setContainer, [@service_container] ]
 
     pure_machine.sdk.string_helper:
         class: PureMachine\Bundle\SDKBundle\Service\StringHelper

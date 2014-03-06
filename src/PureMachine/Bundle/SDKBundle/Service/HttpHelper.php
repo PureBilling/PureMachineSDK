@@ -4,14 +4,24 @@ namespace PureMachine\Bundle\SDKBundle\Service;
 
 use PureMachine\Bundle\SDKBundle\Store\LogStore;
 use PureMachine\Bundle\SDKBundle\Exception\HTTPException;
+use PureMachine\Bundle\SDKBundle\Event\HttpRequestEvent;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 
-class HttpHelper
+class HttpHelper implements ContainerAwareInterface
 {
     private $log= null;
+    private $container = null;
+    private $metadata = array();
 
     public function __construct($logActivity=false)
     {
         if ($logActivity) $this->resetLog();
+    }
+
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
     }
 
     public function resetLog()
@@ -29,6 +39,11 @@ class HttpHelper
         $urlParameters = "json=" . json_encode($data);
 
         return "$url?$urlParameters";
+    }
+
+    public function setNextRequestEventMetadata($metadata)
+    {
+        $this->metadata = $metadata;
     }
 
     public function getJsonResponse($url, $data=array(), $method='POST',
@@ -60,7 +75,7 @@ class HttpHelper
         return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken);
     }
 
-    public function httpRequest($url, $data, $method='POST',
+    public function httpRequest($url, $data=array(), $method='POST',
                                 $headers=array(), $authenticationToken=null)
     {
         $log = $this->log;
@@ -85,7 +100,6 @@ class HttpHelper
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_USERAGENT, 'PureMachine HttpHelpers:getJsonAnswer');
 
@@ -107,6 +121,7 @@ class HttpHelper
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
             throw $e;
         }
 
@@ -117,6 +132,7 @@ class HttpHelper
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
             throw $e;
         }
 
@@ -127,6 +143,7 @@ class HttpHelper
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
             throw $e;
         }
 
@@ -136,10 +153,34 @@ class HttpHelper
             $e->addMessage('Ouptut', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
             throw $e;
         }
 
+        $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
+
         return $output;
+    }
+
+    private function triggerHttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code)
+    {
+        /**
+         * Event can be desactived by Metadatas
+         */
+        if (array_key_exists('disableEvent', $this->metadata) && $this->metadata['disableEvent'] == true) {
+            $disable = true;
+        } else {
+            $disable = false;
+        }
+
+        if ($this->container && !$disable) {
+            $event = new HttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code, $this->metadata);
+            $eventDispatcher = $this->container->get("event_dispatcher");
+            $eventDispatcher->dispatch("puremachine.httphelper.request", $event);
+        }
+
+        //Remove metadatas
+        $this->metadata = array();
     }
 
     public function addGetParametersToUrl($url, $parameters)
@@ -153,7 +194,14 @@ class HttpHelper
 
         $queryString = http_build_query(array_merge($queryStringArray, $parameters));
 
-        if (!array_key_exists('path', $frag)) $frag['path'] = "";
-        return $frag['scheme']. '://' . $frag['host']. $frag['path'] ."?" . $queryString;
+        if (!array_key_exists('path', $frag)) {
+            $frag['path'] = "";
+        }
+
+        if (!array_key_exists('port', $frag)) {
+            return $frag['scheme']. '://' . $frag['host']. $frag['path'] ."?" . $queryString;
+        }
+
+        return $frag['scheme']. '://' . $frag['host'].":". $frag['port'] . $frag['path'] ."?" . $queryString;
     }
 }
