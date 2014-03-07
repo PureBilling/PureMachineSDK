@@ -189,7 +189,9 @@ class WebServiceClient implements ContainerAwareInterface
         $fullUrl = $http->getFullUrl($url, $inputData);
 
         try {
-            $http->setNextRequestEventMetadata(['disableEvent' => true]);
+            $http->setNextRequestEventMetadata(array(
+                'disableEvent' => true
+            ));
             $response = $http->getJsonResponse(
                     $url,
                     $inputData,
