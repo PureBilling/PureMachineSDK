@@ -22,6 +22,11 @@ use Symfony\Component\Validator\Validation;
 
 class WebServiceClient implements ContainerAwareInterface
 {
+
+    const MAJOR_VERSION_VALIDATION_SUPPORT = 5;
+    const MINOR_VERSION_VALIDATION_SUPPORT = 3;
+    const RELEASE_VERSION_VALIDATION_SUPPORT = 10;
+
     protected $container = null;
     protected $annotationReader = null;
     protected $validator = null;
@@ -147,12 +152,23 @@ class WebServiceClient implements ContainerAwareInterface
         //Simple type are mapped to Store classes
         $inputData = StoreHelper::simpleTypeToStore($inputData);
 
-        //Validate input value
-        try {
-            $this->checkType($inputData, null, null,
-                             WebServiceException::WS_003);
-        } catch (WebServiceException $e) {
+        /*
+         * Validate input value - Only if the PHP version is
+         * greater or equal than 5.3.10 (previous version does not work
+         * correctly with annotation validations)
+         */
+        if(
+            (PHP_MAJOR_VERSION >= static::MAJOR_VERSION_VALIDATION_SUPPORT)
+            && (PHP_MINOR_VERSION >= static::MINOR_VERSION_VALIDATION_SUPPORT)
+            && (PHP_RELEASE_VERSION >= static::RELEASE_VERSION_VALIDATION_SUPPORT)
+            )
+        {
+            try {
+                $this->checkType($inputData, null, null,
+                    WebServiceException::WS_003);
+            } catch (WebServiceException $e) {
                 return $this->buildErrorResponse($webServiceName, $version, $e);
+            }
         }
 
         //Validate and serialize input value
