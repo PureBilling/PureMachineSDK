@@ -18,8 +18,8 @@ class Exception extends \Exception
 
         $message_code = 'static::' . $code . "_MESSAGE";
 
-        if (defined($message_code)) $message = "$code: " . constant($message_code);
-        else $message = "$code: " . constant("static::GENERIC_001_MESSAGE");
+        if (defined($message_code)) $message = constant($message_code);
+        else $message = constant("static::GENERIC_001_MESSAGE");
 
         if (is_numeric($code)) $numCode = $code;
         else $numCode = 0;
