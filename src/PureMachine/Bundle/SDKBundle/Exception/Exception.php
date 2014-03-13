@@ -40,7 +40,7 @@ class Exception extends \Exception
             $this->exceptionStore->setFile("unknown");
             $this->exceptionStore->setLine(0);
             //Searching for a valid stackItem
-            $stackItem = $this->searchForFileAndLineCalledFromStack($stack);
+            $stackItem = static::searchForFileAndLineCalledFromStack($stack);
             if (!is_null($stackItem)) {
                 $this->exceptionStore->setFile(basename($stackItem['file'],'.php'));
                 $this->exceptionStore->setLine($stackItem['line']);
@@ -56,7 +56,7 @@ class Exception extends \Exception
      * @param  array      $stack
      * @return array|null
      */
-    private function searchForFileAndLineCalledFromStack(array $stack)
+    protected static function searchForFileAndLineCalledFromStack(array $stack)
     {
         for ($i=0;$i<count($stack);$i++) {
             if(array_key_exists("file", $stack[$i]) && array_key_exists("line", $stack[$i])) return $stack[$i];
@@ -78,5 +78,34 @@ class Exception extends \Exception
     public function getErrorCode()
     {
         return $this->exceptionStore->getCode();
+    }
+
+    /**
+     * Build a exceptionStore from a PHP Exception
+     * @param \Exception $e
+     */
+    public static function buildExceptionStore(\Exception $e)
+    {
+        $exceptionStore = new ExceptionStore();
+        $exceptionStore->setMessage($e->getMessage());
+        $exceptionStore->setCode($e->getCode());
+        $exceptionStore->setExceptionClass(get_class($e));
+        $t = explode('\n', $e->getTraceAsString());
+        $exceptionStore->setStack($t);
+
+        $stack = $e->getTrace();
+        if (count($stack) > 0) {
+            //Setting default unknown values
+            $exceptionStore->setFile("unknown");
+            $exceptionStore->setLine(0);
+            //Searching for a valid stackItem
+            $stackItem = static::searchForFileAndLineCalledFromStack($stack);
+            if (!is_null($stackItem)) {
+                $exceptionStore->setFile(basename($stackItem['file'],'.php'));
+                $exceptionStore->setLine($stackItem['line']);
+            }
+        }
+
+        return $exceptionStore;
     }
 }

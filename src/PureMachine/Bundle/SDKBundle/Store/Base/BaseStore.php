@@ -315,6 +315,7 @@ abstract class BaseStore implements JsonSerializable
                                     } else {
                                         $this->$property = $valueToSet;
                                     }
+
                                     return $this;
                                     break;
                                 case 'float':
@@ -324,6 +325,7 @@ abstract class BaseStore implements JsonSerializable
                                     } else {
                                         $this->$property = $valueToSet;
                                     }
+
                                     return $this;
                                     break;
                             }
