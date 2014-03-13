@@ -46,7 +46,8 @@ class WebServiceException extends Exception
 
             } catch (\Exception $e) {}
 
-            throw new WebServiceException($answer->getAnswer()->getCompleteMessage(), static::DEFAULT_ERROR_CODE);
+            $e = new WebServiceException($answer->getAnswer()->getCompleteMessage(), $answer->getAnswer()->getCode());
+            $e->getStore()->setMessage($e->getMessage());
         }
     }
 }
