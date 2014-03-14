@@ -7,7 +7,7 @@ use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Constraints as Assert;
 use PureMachine\Bundle\SDKBundle\Exception\StoreException;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
-use DateTime;
+use Symfony\Component\Validator\Constraint;
 
 /**
  * Base class for store that does not have modifiedProperties system
@@ -260,7 +260,7 @@ abstract class BaseStore implements JsonSerializable
                         switch ($propertyDefinition->type) {
                             case 'datetime':
                                 if (is_numeric($this->$property)) {
-                                    return new DateTime("@".$this->$property);
+                                    return new \DateTime("@".$this->$property);
                                     break;
                                 }
 
@@ -299,7 +299,7 @@ abstract class BaseStore implements JsonSerializable
 
                                         return $this;
                                     }
-                                    if (!$valueToSet instanceof DateTime) {
+                                    if (!$valueToSet instanceof \DateTime) {
                                         throw new StoreException("$method(\$value) only accepts DateTime as input date.",
                                             StoreException::STORE_005);
                                     }
@@ -393,6 +393,7 @@ abstract class BaseStore implements JsonSerializable
             $annotations = $annotationReader->getPropertyAnnotations($prop);
             $definition[$prop->getName()]  = new \stdClass();
             $definition[$prop->getName()]->storeClasses = array();
+            $definition[$prop->getName()]->validationConstraints = array();
 
             foreach ($annotations AS $annotation) {
                 if ($annotation instanceof Store\Property) {
@@ -403,6 +404,8 @@ abstract class BaseStore implements JsonSerializable
                     $definition[$prop->getName()]->storeClasses = (array) $annotation->value;
                 } elseif ($annotation instanceof Assert\Type) {
                     $definition[$prop->getName()]->type = $annotation->type;
+                } elseif ($annotation instanceof Constraint) {
+                    $definition[$prop->getName()]->validationConstraints[] = static::getClassName($annotation);
                 }
 
                 static::schemaBuilderHook($annotation, $prop, $definition);
@@ -434,6 +437,14 @@ abstract class BaseStore implements JsonSerializable
         self::$jsonSchema[$class]->configuration->_className = $class;
 
         return self::$jsonSchema[$class];
+    }
+
+    protected static function getClassName($class)
+    {
+        if (is_object($class)) $class = get_class($class);
+
+        $class = explode('\\', $class);
+        return end($class);
     }
 
     /**
