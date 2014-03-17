@@ -100,6 +100,7 @@ class HttpHelper implements ContainerAwareInterface
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_USERAGENT, 'PureMachine HttpHelpers:getJsonAnswer');
 
@@ -114,6 +115,8 @@ class HttpHelper implements ContainerAwareInterface
         $curlErrorNo = curl_errno($ch);
         curl_close($ch);
         $statusCode = $info['http_code'];
+
+        print $url;
 
         if ($statusCode == 0) {
             $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
