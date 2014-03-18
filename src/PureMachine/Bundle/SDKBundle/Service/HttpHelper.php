@@ -116,8 +116,6 @@ class HttpHelper implements ContainerAwareInterface
         curl_close($ch);
         $statusCode = $info['http_code'];
 
-        print $url;
-
         if ($statusCode == 0) {
             $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
             $e = new HTTPException($message);
