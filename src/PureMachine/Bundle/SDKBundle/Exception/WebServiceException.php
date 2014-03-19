@@ -48,6 +48,7 @@ class WebServiceException extends Exception
 
             $e = new WebServiceException($answer->getAnswer()->getCompleteMessage(), $answer->getAnswer()->getCode());
             $e->getStore()->setMessage($e->getMessage());
+            throw $e;
         }
     }
 }
