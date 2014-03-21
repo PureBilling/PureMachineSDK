@@ -20,6 +20,12 @@ use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 use Symfony\Component\Validator\Validation;
 
+/**
+ * Needed because there is an annotation Inheritance bug in PHP 5.3.3 (centOS version)
+ */
+use JMS\DiExtraBundle\Annotation\Service;
+use JMS\DiExtraBundle\Annotation\Tag;
+
 class WebServiceClient implements ContainerAwareInterface
 {
 
@@ -37,6 +43,14 @@ class WebServiceClient implements ContainerAwareInterface
     public function __construct($endPoint = null)
     {
         $this->endPoint = $endPoint;
+
+        /**
+         * Create classes here only to avoid php-cs-fixer
+         * to remove classes that are not used
+         * (PHP 5.3.3 annotation bug)
+         */
+        new Tag();
+        new Service();
     }
 
     /**
