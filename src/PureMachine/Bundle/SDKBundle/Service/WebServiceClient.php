@@ -43,7 +43,10 @@ class WebServiceClient implements ContainerAwareInterface
     public function __construct($endPoint = null)
     {
         $this->endPoint = $endPoint;
+    }
 
+    private function nerverUsed()
+    {
         /**
          * Create classes here only to avoid php-cs-fixer
          * to remove classes that are not used

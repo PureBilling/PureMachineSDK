@@ -3,7 +3,6 @@ namespace PureMachine\Bundle\SDKBundle\Store\WSDoc;
 
 use Symfony\Component\Validator\Constraints as Assert;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
-use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
 
 class StoreDoc extends ObjectPropertyDoc
 {

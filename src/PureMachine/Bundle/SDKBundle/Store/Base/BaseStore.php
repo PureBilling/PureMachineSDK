@@ -444,6 +444,7 @@ abstract class BaseStore implements JsonSerializable
         if (is_object($class)) $class = get_class($class);
 
         $class = explode('\\', $class);
+
         return end($class);
     }
 
