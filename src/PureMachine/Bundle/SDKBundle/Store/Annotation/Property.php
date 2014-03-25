@@ -11,5 +11,6 @@ class Property extends Annotation
 {
     public $description = 'default description';
     public $private = false;
+    public $recommended = false;
     public $alias = null;
 }

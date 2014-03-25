@@ -400,6 +400,7 @@ abstract class BaseStore implements JsonSerializable
                     $definition[$prop->getName()]->description = $annotation->description;
                     $definition[$prop->getName()]->private = $annotation->private;
                     $definition[$prop->getName()]->alias = $annotation->alias;
+                    $definition[$prop->getName()]->recommended = $annotation->recommended;
                 } elseif ($annotation instanceof Store\StoreClass) {
                     $definition[$prop->getName()]->storeClasses = (array) $annotation->value;
                 } elseif ($annotation instanceof Assert\Type) {
