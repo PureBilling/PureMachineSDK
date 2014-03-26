@@ -38,4 +38,10 @@ class LiteralPropertyDoc extends BaseStore
      * @Assert\Type("boolean")
      */
     protected $required = false;
+
+    /**
+     * @Store\Property(description="true if the property is recommended")
+     * @Assert\Type("boolean")
+     */
+    protected $recommended = false;
 }
