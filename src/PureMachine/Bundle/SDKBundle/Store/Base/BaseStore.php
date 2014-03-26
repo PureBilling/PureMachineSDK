@@ -73,13 +73,27 @@ abstract class BaseStore implements JsonSerializable
      *
      * need to run validate() bedore
      */
-    public function getViolations()
+    public function getViolations($ignoredVioltations=null)
     {
         if (!$this->isValidated())
             throw new StoreException("You must call validate() method before.",
                                       StoreException::STORE_002);
 
-        return $this->violations;
+        if (!is_array($ignoredVioltations)) {
+            return $this->violations;
+        }
+
+        /**
+         * Ignore violation by property path
+         */
+        $violations = array();
+        foreach ($this->getViolations() as $violation) {
+            if (!in_array($violation->getPropertyPath(), $ignoredVioltations)) {
+                $violations[] = $violation;
+            }
+        }
+
+        return $violations;
     }
 
     public function jsonSerialize()
