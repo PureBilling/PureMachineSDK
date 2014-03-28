@@ -190,7 +190,6 @@ abstract class BaseStore implements JsonSerializable
 
         foreach ($schema->definition as $property => $definition) {
             if (!$this->isStoreProperty($property)) {
-                $missingProperties[$property] = $data[$property];
                 continue;
             }
             //Find the value if there is one.
@@ -212,19 +211,24 @@ abstract class BaseStore implements JsonSerializable
 
             /**
              * unSerialize Value
-             * Note that we unSerialize when $value is null in order to
-             * create Store composed class if there is.
              */
             if (isset($definition->storeClasses)) $storeClasses = $definition->storeClasses;
             else $storeClasses = array();
 
-            $storeClass = StoreHelper::getStoreClass (null, $storeClasses);
+            $storeClass = StoreHelper::getStoreClass(null, $storeClasses);
 
             if ($value) {
                 $value = StoreHelper::unSerialize($value, $storeClasses,
                                                   self::$annotationReader);
             } elseif ($storeClass && $definition->type == 'object') {
+
+                /**
+                 * We create a store with no values only if it's NotNone
+                 */
+                if (in_array('NotBlank', $definition->validationConstraints)) {
                 $value = StoreHelper::createClass($storeClass, $data);
+                }
+
             } elseif ($definition->type == 'array')
                 $value = array();
 

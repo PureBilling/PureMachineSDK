@@ -4,6 +4,7 @@ namespace PureMachine\Bundle\SDKBundle\Tests\Store;
 
 use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA;
 use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreInStore;
+use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreWithStoreANotBlankIn;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreDateTime;
 use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\ComposedStore;
@@ -351,5 +352,17 @@ class StoreTest extends WebTestCase
         $this->assertTrue($store->getStoreA() instanceof StoreA);
         $storesA = $store->getStoresA();
         $this->assertTrue($storesA[0] instanceof StoreA);
+    }
+
+    /**
+     * @code
+     * phpunit -v --filter testStoreWithNullableStore -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testStoreWithNullableStore()
+    {
+        $store = new StoreWithStoreANotBlankIn();
+        $store->validate();
+        $store->raiseIfInvalid();
     }
 }
