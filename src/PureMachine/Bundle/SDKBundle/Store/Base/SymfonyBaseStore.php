@@ -1,16 +1,13 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Store\Base;
 
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
 use PureMachine\Bundle\SDKBundle\Exception\StoreException;
 use PureMachine\Bundle\SDKBundle\Event\ResolveStoreEntityEvent;
 /**
  * add modifiedProperties system
  */
-abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInterface
+abstract class SymfonyBaseStore extends BaseStore
 {
     protected $doctrineEntityManager = null;
     protected $container = null;
@@ -26,14 +23,14 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         parent::initialize($data);
     }
 
-    public function setContainer(ContainerInterface $container = null)
+    public function setContainer($container)
     {
         $this->container = $container;
 
         //Inject DoctrineEntityManager on all store childs that needs it
         $schema = static::getJsonSchema();
         foreach ($schema->definition as $propertyName=>$definition) {
-            if ($this->$propertyName instanceof ContainerAwareInterface) {
+            if ($this->$propertyName instanceof SymfonyBaseStore) {
                 //Asking the child store if needs the doctrineEntityManager
                 $this->$propertyName->setContainer($container);
             }
@@ -293,17 +290,5 @@ abstract class SymfonyBaseStore extends BaseStore implements ContainerAwareInter
         }
 
         return parent::validate($validator);
-    }
-
-    public function attachSymfony(BaseStore $store)
-    {
-        $store->setValidator(static::$validator);
-        if ($store instanceof ContainerAwareInterface)
-            $store->setContainer($this->container);
-
-        if ($store instanceof SymfonyBaseStore)
-            $store->setAnnotationReader(static::$annotationReader);
-
-        return $store;
     }
 }

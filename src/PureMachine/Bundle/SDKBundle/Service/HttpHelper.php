@@ -5,13 +5,11 @@ namespace PureMachine\Bundle\SDKBundle\Service;
 use PureMachine\Bundle\SDKBundle\Store\LogStore;
 use PureMachine\Bundle\SDKBundle\Exception\HTTPException;
 use PureMachine\Bundle\SDKBundle\Event\HttpRequestEvent;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 
-class HttpHelper implements ContainerAwareInterface
+class HttpHelper
 {
     private $log= null;
-    private $container = null;
+    private $symfonyContainer = null;
     private $metadata = array();
 
     public function __construct($logActivity=false)
@@ -19,9 +17,9 @@ class HttpHelper implements ContainerAwareInterface
         if ($logActivity) $this->resetLog();
     }
 
-    public function setContainer(ContainerInterface $container = null)
+    public function setContainer($container)
     {
-        $this->container = $container;
+        $this->symfonyContainer = $container;
     }
 
     public function resetLog()
@@ -174,9 +172,9 @@ class HttpHelper implements ContainerAwareInterface
             $disable = false;
         }
 
-        if ($this->container && !$disable) {
+        if ($this->symfonyContainer && !$disable) {
             $event = new HttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code, $this->metadata);
-            $eventDispatcher = $this->container->get("event_dispatcher");
+            $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.httphelper.request", $event);
         }
 

@@ -1,7 +1,6 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Store\Base;
 
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use PureMachine\Bundle\SDKBundle\Store\Type\String;
 use PureMachine\Bundle\SDKBundle\Store\Type\Boolean;
 
@@ -45,7 +44,7 @@ class StoreHelper
                                        $annotationReader=null, $symfonyContainer=null)
     {
         if ($inValue instanceof BaseStore) {
-            if ($symfonyContainer && $inValue instanceof ContainerAwareInterface)
+            if ($symfonyContainer && $inValue instanceof SymfonyBaseStore)
             $inValue->setContainer($symfonyContainer);
 
             return $inValue;
@@ -109,7 +108,7 @@ class StoreHelper
         if ($annotationReader) {
             $store->setAnnotationReader($annotationReader);
         }
-        if ($symfonyContainer && $store instanceof ContainerAwareInterface) {
+        if ($symfonyContainer && $store instanceof SymfonyBaseStore) {
             $store->setContainer($symfonyContainer);
         }
 

@@ -12,8 +12,3 @@ services:
 
     pure_machine.sdk.string_helper:
         class: PureMachine\Bundle\SDKBundle\Service\StringHelper
-
-    pure_machine.sdk.store_factory:
-        class: PureMachine\Bundle\SDKBundle\Service\StoreFactory
-        calls:
-            - [setContainer, [@service_container] ]

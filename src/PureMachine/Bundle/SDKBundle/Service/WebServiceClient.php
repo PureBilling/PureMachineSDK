@@ -2,8 +2,6 @@
 
 namespace PureMachine\Bundle\SDKBundle\Service;
 
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Doctrine\Common\Annotations\FileCacheReader;
 use Doctrine\Common\Annotations\AnnotationReader;
 use PureMachine\Bundle\SDKBundle\Event\WebServiceCalledEvent;
@@ -26,14 +24,14 @@ use Symfony\Component\Validator\Validation;
 use JMS\DiExtraBundle\Annotation\Service;
 use JMS\DiExtraBundle\Annotation\Tag;
 
-class WebServiceClient implements ContainerAwareInterface
+class WebServiceClient
 {
 
     const MAJOR_VERSION_VALIDATION_SUPPORT = 5;
     const MINOR_VERSION_VALIDATION_SUPPORT = 3;
     const RELEASE_VERSION_VALIDATION_SUPPORT = 10;
 
-    protected $container = null;
+    protected $symfonyContainer = null;
     protected $annotationReader = null;
     protected $validator = null;
     protected $login = null;
@@ -60,19 +58,19 @@ class WebServiceClient implements ContainerAwareInterface
      * Symfony2 container
      * Called only if we are in a Symfony2 context.
      */
-    public function setContainer(ContainerInterface $container = null)
+    public function setContainer($container)
     {
-        $this->container = $container;
+        $this->symfonyContainer = $container;
     }
 
     public function getContainer()
     {
-        return $this->container;
+        return $this->symfonyContainer;
     }
 
     public function isSymfony()
     {
-        if ($this->container) return true;
+        if ($this->symfonyContainer) return true;
         return false;
     }
 
@@ -109,7 +107,7 @@ class WebServiceClient implements ContainerAwareInterface
         //Create unique token to identify the call
         $token = uniqid("CALL_");
         if ($this->isSymfony()) {
-            $eventDispatcher = $this->container->get("event_dispatcher");
+            $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
         }
 
         /*
@@ -122,8 +120,8 @@ class WebServiceClient implements ContainerAwareInterface
         }
 
         //check if the service is local
-        if ($this->isSymfony() && $this->container->has('pureMachine.sdk.webServiceManager')) {
-            $WebServiceManager = $this->container->get('pureMachine.sdk.webServiceManager');
+        if ($this->isSymfony() && $this->symfonyContainer->has('pureMachine.sdk.webServiceManager')) {
+            $WebServiceManager = $this->symfonyContainer->get('pureMachine.sdk.webServiceManager');
 
             if ($WebServiceManager->getSchema($webServiceName)) {
                 $return = $WebServiceManager->localCall($webServiceName, $inputData, $version);
@@ -197,7 +195,7 @@ class WebServiceClient implements ContainerAwareInterface
 
         //Make the http call
         if ($this->isSymfony()) {
-            $http = $this->container->get('pure_machine.sdk.http_helper');
+            $http = $this->symfonyContainer->get('pure_machine.sdk.http_helper');
         } else {
             $http = new HttpHelper();
         }
@@ -244,9 +242,9 @@ class WebServiceClient implements ContainerAwareInterface
          * specified on the static class PureBilling
          */
         $baseUrl = null;
-        if ($this->isSymfony() && $this->container->hasParameter('ws_namespaces')) {
-            $namespaces = $this->container->getParameter('ws_namespaces');
-            $stringHelper = $this->container->get('pure_machine.sdk.string_helper');
+        if ($this->isSymfony() && $this->symfonyContainer->hasParameter('ws_namespaces')) {
+            $namespaces = $this->symfonyContainer->getParameter('ws_namespaces');
+            $stringHelper = $this->symfonyContainer->get('pure_machine.sdk.string_helper');
             natsort($namespaces);
 
             foreach ($namespaces as $namespace => $url) {
@@ -284,7 +282,7 @@ class WebServiceClient implements ContainerAwareInterface
         if ($this->validator) return $this->validator;
 
         if ($this->isSymfony())
-            $this->validator = $this->container->get('validator');
+            $this->validator = $this->symfonyContainer->get('validator');
         else {
             $this->validator = Validation::createValidatorBuilder()
                                           ->enableAnnotationMapping()
@@ -372,7 +370,7 @@ class WebServiceClient implements ContainerAwareInterface
          * If we are in production environement, we remove the stack trace
          * and detailled error messages
          */
-        if (!$this->isSymfony() || $this->container->get('kernel')->getEnvironment() == 'prod') {
+        if (!$this->isSymfony() || ( $this->symfonyContainer && $this->symfonyContainer->get('kernel')->getEnvironment() == 'prod')) {
             $data->setStack(array());
             $data->setMessages(array());
         }
@@ -388,8 +386,9 @@ class WebServiceClient implements ContainerAwareInterface
             } else {
                 $response = new Response();
             }
-        } elseif ($this->container && $this->container->get('kernel')->getEnvironment() != 'prod') {
+        } elseif ($this->symfonyContainer && $this->symfonyContainer->get('kernel')->getEnvironment() != 'prod') {
             $response = new DebugErrorResponse();
+            $response->setUrl($fullUrl);
         } else {
             $response = new ErrorResponse();
         }
@@ -399,10 +398,6 @@ class WebServiceClient implements ContainerAwareInterface
         $response->setVersion($version);
         $response->setLocal(true);
         $response->setAnswer($data);
-
-        if ($response instanceof DebugErrorResponse) {
-            $response->setUrl($fullUrl);
-        }
 
         if ($status == 'success') $response->response = $data;
         else $response->error = $data;
