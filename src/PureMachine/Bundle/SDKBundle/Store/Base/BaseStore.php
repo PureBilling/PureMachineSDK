@@ -193,6 +193,27 @@ abstract class BaseStore implements JsonSerializable
                 continue;
             }
             //Find the value if there is one.
+            if (!is_array($data)) {
+                if (is_string($data)) {
+                    throw new StoreException(
+                        "Error initializing the store. Expected array on init data but got string : '".$data."'"
+                    );
+                } elseif (is_bool($data)) {
+                    $value = "true";
+                    if(!$data) $value = "false";
+                    throw new StoreException(
+                        "Error initializing the store. Expected array on init data but got boolean with (".$data.") value"
+                    );
+                } elseif (is_numeric($data)) {
+                    throw new StoreException(
+                        "Error initializing the store. Expected array on init data but got a numeric value : ".$data
+                    );
+                } else {
+                    throw new StoreException(
+                        "Error initializing the store. Expected array on init data but got ".gettype($data)
+                    );
+                }
+            }
             if (array_key_exists($property, $data))
                 $value = $data[$property];
             else {
