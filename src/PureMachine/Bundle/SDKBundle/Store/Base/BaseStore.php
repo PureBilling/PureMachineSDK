@@ -535,8 +535,35 @@ abstract class BaseStore implements JsonSerializable
          */
         $jsonSchema = self::getJsonSchema();
         foreach ($jsonSchema->definition as $propertyName=>$prodSchema) {
-            if ($prodSchema->type=="object") {
-                if (!($this->$propertyName instanceof BaseStore)) continue;
+            if ($prodSchema->type=="object" || $prodSchema->type=="id") {
+                if ($prodSchema->type=="id" && is_scalar($this->$propertyName)) continue;
+
+                /**
+                 * we enter here if we are not able to unserialize the object
+                 * because it does not have a valid _className property, or/and there
+                 * is two StoreClasses possible
+                 */
+                if ($this->$propertyName instanceof \stdClass && count($prodSchema->storeClasses)) {
+
+                    if (isset($this->$propertyName->_className)) {
+                        $className = $this->$propertyName->_className;
+                        /**
+                         * the _className class does not exists
+                         */
+                        if (!class_exists($className)) {
+                            $this->addViolation($propertyName, "$propertyName ->_className '$className' store class does not exists ");
+                        }
+
+                        if (!in_array($className, $prodSchema->storeClasses)) {
+                            $this->addViolation($propertyName, "$propertyName ->_className is not allowed here");
+                        }
+                    }
+
+                    $this->addViolation($propertyName, "$propertyName should define _className property. see store definition");
+                }
+
+                if ((!$this->$propertyName instanceof BaseStore)) continue;
+
                 $validationChild = $this->$propertyName->validate();
                 if (!$validationChild) {
                     $violationsChild = $this->$propertyName->getViolations();
@@ -561,9 +588,10 @@ abstract class BaseStore implements JsonSerializable
                       && is_array($this->$propertyName)) {
 
                 foreach ($this->$propertyName as $store) {
-                    if (!StoreHelper::checkStoreClass($store, $prodSchema->storeClasses))
+                    if (!StoreHelper::checkStoreClass($store, $prodSchema->storeClasses)) {
                             $this->addViolation($propertyName, "'$propertyName' array element has a wrong "
                                                               ."store type.");
+                    }
                 }
             }
         }
