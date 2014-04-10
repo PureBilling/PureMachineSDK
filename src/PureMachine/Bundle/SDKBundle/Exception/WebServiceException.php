@@ -34,6 +34,12 @@ class WebServiceException extends Exception
                 foreach($stack as $line) print "$line\n";
             }
 
+            if ($answer instanceof DebugErrorResponse) {
+                $message = $answer->getAnswer()->getCompleteMessage();
+            } else {
+                $message = $answer->getAnswer()->getMessage();
+            }
+
             /**
              * Try to raise with the original exception class
              */
@@ -41,13 +47,15 @@ class WebServiceException extends Exception
                 $class = $answer->getAnswer()->getExceptionClass();
 
                 if (class_exists($class)) {
-                    throw new $class($answer->getAnswer()->getCompleteMessage(), $answer->getAnswer()->getCode());
+                    throw new $class($message, $answer->getAnswer()->getCode());
                 }
 
             } catch (\Exception $e) {}
 
-            $e = new WebServiceException($answer->getAnswer()->getCompleteMessage(), $answer->getAnswer()->getCode());
-            $e->getStore()->setMessage($e->getMessage());
+            $e = new WebServiceException($message, $answer->getAnswer()->getCode());
+            $e->getStore()->setMessage($answer->getAnswer()->getMessage());
+            $e->getStore()->setDetailledMessage($answer->getAnswer()->getDetailledMessage());
+            $e->getStore()->setCode($answer->getAnswer()->getCode());
             throw $e;
         }
     }
