@@ -194,7 +194,8 @@ abstract class SymfonyBaseStore extends BaseStore
 
     protected function resolveEntity($propertyName)
     {
-        $id = $this->$propertyName;
+        $method = "get" .ucfirst($propertyName);
+        $id = $this->$method();
 
         try {
             if ($id instanceof BaseStore) $id = $id->getId();
