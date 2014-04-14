@@ -161,6 +161,24 @@ class HttpHelper
         return $output;
     }
 
+    public function disableNextRequestEvent($disableAlsoInDev=false)
+    {
+        /**
+         * In dev mode, we never disable events.
+         */
+        if ($this->symfonyContainer && $this->symfonyContainer
+                                            ->get('kernel')
+                                            ->getEnvironment() != 'prod'
+            && !$disableAlsoInDev) {
+            return;
+        }
+
+        if (!is_array($this->metadata)) {
+            $this->metadata = array();
+        }
+        $this->metadata['disableEvent'] == true;
+    }
+
     private function triggerHttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code)
     {
         /**
