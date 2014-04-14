@@ -176,7 +176,7 @@ class HttpHelper
         if (!is_array($this->metadata)) {
             $this->metadata = array();
         }
-        $this->metadata['disableEvent'] == true;
+        $this->metadata['disableEvent'] = true;
     }
 
     private function triggerHttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code)
