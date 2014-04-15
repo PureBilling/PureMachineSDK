@@ -117,7 +117,7 @@ abstract class BaseStore implements JsonSerializable
     /**
      * Serilize the Store
      */
-    public function serialize($includePrivate=false)
+    public function serialize($includePrivate=false, $includeInternal=true)
     {
         $answer = array();
         $schema = $this->getJsonSchema();
@@ -125,20 +125,25 @@ abstract class BaseStore implements JsonSerializable
             $method = 'get' . ucfirst($property);
 
             //Checking special types
-            if ($definition->private == false || $includePrivate) {
-
-                $valueFromMethod = $this->$method();
-
-                if (isset($definition->type)) {
-                    switch ($definition->type) {
-                        case "datetime":
-                            $valueFromMethod = $this->$property; //Integer value
-                            break;
-                    }
-                }
-                $value = StoreHelper::serialize($valueFromMethod, $includePrivate);
-                $answer[$property] = $value;
+            if ($definition->private == true && !$includePrivate) {
+                continue;
             }
+
+            if ($definition->internal == true && !$includeInternal) {
+                continue;
+            }
+
+            $valueFromMethod = $this->$method();
+
+            if (isset($definition->type)) {
+                switch ($definition->type) {
+                    case "datetime":
+                        $valueFromMethod = $this->$property; //Integer value
+                        break;
+                }
+            }
+            $value = StoreHelper::serialize($valueFromMethod, $includePrivate, $includeInternal);
+            $answer[$property] = $value;
 
             /**
              * Add aliases
@@ -438,6 +443,13 @@ abstract class BaseStore implements JsonSerializable
                 if ($annotation instanceof Store\Property) {
                     $definition[$prop->getName()]->description = $annotation->description;
                     $definition[$prop->getName()]->private = $annotation->private;
+
+                    if (substr($prop->getName(),0,1) == "_") {
+                        $definition[$prop->getName()]->internal = true;
+                    } else {
+                        $definition[$prop->getName()]->internal = false;
+                    }
+
                     $definition[$prop->getName()]->alias = $annotation->alias;
                     $definition[$prop->getName()]->recommended = $annotation->recommended;
                 } elseif ($annotation instanceof Store\StoreClass) {
