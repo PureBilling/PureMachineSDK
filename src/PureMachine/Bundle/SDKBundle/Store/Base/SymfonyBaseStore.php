@@ -137,8 +137,23 @@ abstract class SymfonyBaseStore extends BaseStore
         $propSchema = static::getJsonSchema()->definition
                                              ->$property;
         $getter = "get" . ucfirst($property);
-        if (!isset($propSchema->entityMapping) || !is_null($this->$property)) {
+        if (!isset($propSchema->entityMapping)) {
             return parent::__call($getter, $arguments);
+        }
+
+        if (is_array($this->$property)) {
+             if (count($this->$property) > 0) {
+                return parent::__call($getter, $arguments);
+             }
+        }
+
+        if (!is_null($this->$property)) {
+            if (is_array($this->$property)) {
+                if (count($this->$property) > 0) {
+                    return parent::__call($getter, $arguments);
+                }
+            }
+            else return parent::__call($getter, $arguments);
         }
 
         $entityMapping = $propSchema->entityMapping;

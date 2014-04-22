@@ -13,4 +13,7 @@ class HTTPException extends Exception
 
     const HTTP_401 = 'HTTP_401';
     const HTTP_401_MESSAGE = '401: Page not found';
+
+    const HTTP_500 = 'HTTP_500';
+    const HTTP_500_MESSAGE = '500: remote server error';
 }
