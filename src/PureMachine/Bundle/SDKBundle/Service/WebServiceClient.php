@@ -359,10 +359,14 @@ class WebServiceClient
         }
     }
 
-    protected function buildErrorResponse($webServiceName, $version, Exception $exception,
+    protected function buildErrorResponse($webServiceName, $version, \Exception $exception,
                                       $fullUrl=null, $serialize=false)
     {
-        $data = $exception->getStore();
+        if ($exception instanceof Exception) {
+            $data = $exception->getStore();
+        } else {
+            $data = Exception::buildExceptionStore(($exception));
+        }
 
         if ($serialize) $data = $data->serialize();
 

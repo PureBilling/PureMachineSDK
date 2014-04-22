@@ -191,6 +191,11 @@ class HttpHelper
         }
 
         if ($this->symfonyContainer && !$disable) {
+
+            if (is_array($inputData) && array_key_exists('json', $inputData)) {
+                $inputData = $inputData['json'];
+            }
+
             $event = new HttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code, $this->metadata);
             $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.httphelper.request", $event);
