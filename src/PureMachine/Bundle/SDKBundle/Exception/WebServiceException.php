@@ -1,6 +1,7 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Exception;
 
+use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\Response;
 
 class WebServiceException extends Exception
@@ -35,7 +36,8 @@ class WebServiceException extends Exception
             }
 
             if ($answer instanceof DebugErrorResponse) {
-                $message = $answer->getAnswer()->getCompleteMessage();
+                $message = $answer->getAnswer()->getMessage() ." \n";
+                $message .= $answer->getAnswer()->getDetailledMessage();
             } else {
                 $message = $answer->getAnswer()->getMessage();
             }
