@@ -44,6 +44,21 @@ class HttpHelper
         $this->metadata = $metadata;
     }
 
+    public function getSoapResponse($wsdl, $function, $data)
+    {
+        $client = new \SoapClient($wsdl);
+        try {
+            $json = $client->__soapCall($function, $data);
+        } catch (\Exception $e) {
+            $this->triggerHttpRequestEvent($data, $e->getMessage(), $wsdl, 'SOAP', 500);
+            throw $e;
+        }
+
+        $this->triggerHttpRequestEvent($data, json_encode($json), $wsdl, 'SOAP', 200);
+
+        return $json;
+    }
+
     public function getJsonResponse($url, $data=array(), $method='POST',
                                  $headers=array(), $authenticationToken=null)
     {
