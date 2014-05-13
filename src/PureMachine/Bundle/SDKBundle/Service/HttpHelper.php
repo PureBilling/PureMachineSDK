@@ -46,7 +46,7 @@ class HttpHelper
 
     public function getSoapResponse($wsdl, $function, $data)
     {
-        $options = [];
+        $options = array();
         $debug = false;
 
         if ($debug) {
