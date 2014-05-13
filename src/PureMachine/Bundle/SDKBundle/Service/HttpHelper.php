@@ -46,7 +46,13 @@ class HttpHelper
 
     public function getSoapResponse($wsdl, $function, $data)
     {
-        $client = new \SoapClient($wsdl);
+        $options = [];
+        $debug = false;
+
+        if ($debug) {
+            $options['trace'] = 1;
+        }
+        $client = new \SoapClient($wsdl, $options);
         try {
             $json = $client->__soapCall($function, $data);
         } catch (\Exception $e) {
@@ -55,6 +61,12 @@ class HttpHelper
         }
 
         $this->triggerHttpRequestEvent($data, json_encode($json), $wsdl, 'SOAP', 200);
+
+        if ($debug) {
+            echo "/****** calling $function on $wsdl *******/\n\n";
+            echo "REQUEST:\n" . $client->__getLastRequest() . "\n\n";
+            echo "ANSWER:\n" . $client->__getLastResponse() . "\n\n";
+        }
 
         return $json;
     }
@@ -88,18 +100,27 @@ class HttpHelper
         return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken);
     }
 
-    public function httpRequest($url, $data=array(), $method='POST',
+    public function httpRequest($url, $data=null, $method='POST',
                                 $headers=array(), $authenticationToken=null)
     {
         $log = $this->log;
         $ch = curl_init();
+
+        if (!$data) {
+            $data = array();
+        }
 
         if ($method == 'GET') {
                 $url = $this->addGetParametersToUrl($url, $data);
         } elseif ($method == 'POST') {
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+
+            if (is_array($data)) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            } else {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            }
         }
 
         if ($log) $log->getTitle("call: $url");
@@ -222,6 +243,10 @@ class HttpHelper
 
     public function addGetParametersToUrl($url, $parameters)
     {
+        if (!is_array($parameters)) {
+            return $url;
+        }
+
         $frag = parse_url($url);
         $queryStringArray = array();
 
