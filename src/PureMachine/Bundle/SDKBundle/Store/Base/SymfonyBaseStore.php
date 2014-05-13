@@ -103,10 +103,10 @@ abstract class SymfonyBaseStore extends BaseStore
         }
 
         if ($methodPrefix == 'set') {
+            if(count($arguments)==0) throw new StoreException("$method(\$value) takes 1 argument.");
             if (($arguments[0] instanceof SymfonyBaseStore) && ($this->doctrineEntityManager)) {
                 $this->$property->setDoctrineEntityManager($this->doctrineEntityManager);
             }
-            if(count($arguments)==0) throw new StoreException("$method(\$value) takes 1 argument.");
         }
 
         /**
@@ -152,8 +152,7 @@ abstract class SymfonyBaseStore extends BaseStore
                 if (count($this->$property) > 0) {
                     return parent::__call($getter, $arguments);
                 }
-            }
-            else return parent::__call($getter, $arguments);
+            } else return parent::__call($getter, $arguments);
         }
 
         $entityMapping = $propSchema->entityMapping;
