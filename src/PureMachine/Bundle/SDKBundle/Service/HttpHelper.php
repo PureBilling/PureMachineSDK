@@ -44,7 +44,7 @@ class HttpHelper
         $this->metadata = $metadata;
     }
 
-    public function getSoapResponse($wsdl, $function, $data)
+    public function getSoapResponse($wsdl, $function, $data, $cookie=null)
     {
         $options = array();
         $debug = false;
@@ -53,6 +53,13 @@ class HttpHelper
             $options['trace'] = 1;
         }
         $client = new \SoapClient($wsdl, $options);
+
+        if (is_array($cookie)) {
+            foreach ($cookie as $key => $value) {
+                $client->__setCookie($key, $value);
+            }
+        }
+
         try {
             $json = $client->__soapCall($function, $data);
         } catch (\Exception $e) {
