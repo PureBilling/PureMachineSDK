@@ -178,8 +178,6 @@ abstract class SymfonyBaseStore extends BaseStore
     {
         parent::__call($method, $arguments);
 
-        $value = $this->$property;
-
         if (!$this->isStoreProperty($property)) {
             return $this;
         }
@@ -187,6 +185,16 @@ abstract class SymfonyBaseStore extends BaseStore
         $propSchema = static::getJsonSchema()->definition->$property;
         if (!isset($propSchema->entityMapping)) {
             return $this;
+        }
+
+        $value = $this->$property;
+        /**
+         * If some case, we have a store instead of a id.
+         */
+        if ($propSchema->type == 'id' && ($value instanceof BaseStore)) {
+            try {
+                $value = $value->getId();
+            } catch (\Exception $e) {}
         }
 
         $entityMapping = $propSchema->entityMapping;
@@ -211,16 +219,19 @@ abstract class SymfonyBaseStore extends BaseStore
         $method = "get" .ucfirst($propertyName);
         $id = $this->$method();
 
-        try {
-            if ($id instanceof BaseStore) $id = $id->getId();
-        } catch (\Exception $e) {
-            return null;
+        if ($id instanceof BaseStore) {
+            try {
+                 $id = $id->getId();
+            } catch (\Exception $e) {
+                return null;
+            }
         }
 
         if (!$id) return null;
 
-        if (array_key_exists($id, $this->entityCache))
+        if (array_key_exists($id, $this->entityCache)) {
                 return $this->entityCache[$id];
+        }
 
         if (!is_scalar($id))
             throw new StoreException("Can't resolve entity $propertyName. id is an " . gettype($id)
