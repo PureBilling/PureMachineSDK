@@ -144,8 +144,18 @@ class StoreHelper
      * Check if the store class type is part of declared classes in
      * storeClasses.
      */
-    public static function checkStoreClass($store, array $storeClasses)
+    public static function checkStoreClass($store, array $storeClasses, array $allowedId)
     {
+        if (is_string($store) && strstr($store, '_')) {
+
+            list($prefix, $id) = explode('_', $store);
+            if (in_array($prefix, $allowedId)) {
+                return true;
+            }
+
+            return false;
+        }
+
         if (in_array(get_class($store), $storeClasses)) return true;
         return false;
     }

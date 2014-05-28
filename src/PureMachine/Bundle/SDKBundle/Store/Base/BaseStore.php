@@ -272,20 +272,28 @@ abstract class BaseStore implements JsonSerializable
      */
     public function __call($method, $arguments)
     {
-        $class = get_called_class();
-
         //If function exists, we always call it.
         if (method_exists($this, $method)) {
             return call_user_func_array(array($this,$method),$arguments);
         }
 
+        $methodPrefix = substr($method,0,3);
+        $allowedPrefix = ['get', 'set', 'add'];
+        if (!in_array($methodPrefix, $allowedPrefix)) {
+            throw new StoreException($method."() call is not a valid. "
+                .get_class($this),
+                StoreException::STORE_005);
+        }
+
+        $class = get_called_class();
+
         $property = $this->getPropertyFromMethod($method);
-        if (!$this->isStoreProperty($property))
+        if (!$this->isStoreProperty($property)) {
             throw new StoreException("$property is not a store property in "
                                     .get_class($this),
                                      StoreException::STORE_005);
+        }
 
-        $methodPrefix = substr($method,0,3);
         $propertyExists = property_exists($this, $property);
 
         //Retrieving definition
@@ -437,6 +445,7 @@ abstract class BaseStore implements JsonSerializable
             $annotations = $annotationReader->getPropertyAnnotations($prop);
             $definition[$prop->getName()]  = new \stdClass();
             $definition[$prop->getName()]->storeClasses = array();
+            $definition[$prop->getName()]->allowedId = array();
             $definition[$prop->getName()]->validationConstraints = array();
 
             foreach ($annotations AS $annotation) {
@@ -458,6 +467,8 @@ abstract class BaseStore implements JsonSerializable
                     $definition[$prop->getName()]->type = $annotation->type;
                 } elseif ($annotation instanceof Constraint) {
                     $definition[$prop->getName()]->validationConstraints[] = static::getClassName($annotation);
+                } elseif ($annotation instanceof Store\AllowedId) {
+                    $definition[$prop->getName()]->allowedId = (array) $annotation->value;
                 }
 
                 static::schemaBuilderHook($annotation, $prop, $definition);
@@ -600,7 +611,7 @@ abstract class BaseStore implements JsonSerializable
                       && is_array($this->$propertyName)) {
 
                 foreach ($this->$propertyName as $store) {
-                    if (!StoreHelper::checkStoreClass($store, $prodSchema->storeClasses)) {
+                    if (!StoreHelper::checkStoreClass($store, $prodSchema->storeClasses, $prodSchema->allowedId)) {
                             $this->addViolation($propertyName, "'$propertyName' array element has a wrong "
                                                               ."store type.");
                     }
