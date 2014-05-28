@@ -278,7 +278,7 @@ abstract class BaseStore implements JsonSerializable
         }
 
         $methodPrefix = substr($method,0,3);
-        $allowedPrefix = ['get', 'set', 'add'];
+        $allowedPrefix = array('get', 'set', 'add');
         if (!in_array($methodPrefix, $allowedPrefix)) {
             throw new StoreException($method."() call is not a valid. "
                 .get_class($this),
