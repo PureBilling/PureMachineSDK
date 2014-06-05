@@ -4,6 +4,7 @@ namespace PureMachine\Bundle\SDKBundle\Service;
 
 use Doctrine\Common\Annotations\FileCacheReader;
 use Doctrine\Common\Annotations\AnnotationReader;
+use PureMachine\Bundle\SDKBundle\Event\AuthenticationChangedEvent;
 use PureMachine\Bundle\SDKBundle\Event\WebServiceCalledEvent;
 use PureMachine\Bundle\SDKBundle\Event\WebServiceCallingEvent;
 use PureMachine\Bundle\SDKBundle\Store\Base\JsonSerializable;
@@ -421,6 +422,12 @@ class WebServiceClient
     {
         $this->login = $login;
         $this->password = $password;
+
+        if ($this->isSymfony()) {
+            $event = new AuthenticationChangedEvent($login, $password);
+            $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
+            $eventDispatcher->dispatch("puremachine.webservice.authentication_changed", $event);
+        }
     }
 
     /**

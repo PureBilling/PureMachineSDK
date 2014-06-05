@@ -45,14 +45,18 @@ class WebServiceException extends Exception
             /**
              * Try to raise with the original exception class
              */
-            try {
-                $class = $answer->getAnswer()->getExceptionClass();
 
-                if (class_exists($class)) {
-                    throw new $class($message, $answer->getAnswer()->getCode());
+            $class = $answer->getAnswer()->getExceptionClass();
+            if (class_exists($class)) {
+                $ex = null;
+                try {
+                    $ex = new $class($message, $answer->getAnswer()->getCode());
+                } catch (\Exception $e) {}
+
+                if ($ex instanceof \Exception) {
+                    throw $ex;
                 }
-
-            } catch (\Exception $e) {}
+            }
 
             $e = new WebServiceException($message, $answer->getAnswer()->getCode());
             $e->getStore()->setMessage($answer->getAnswer()->getMessage());
