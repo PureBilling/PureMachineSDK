@@ -11,6 +11,7 @@ class HttpHelper
     private $log= null;
     private $symfonyContainer = null;
     private $metadata = array();
+    private $lastAnswerHeaders = null;
 
     public function __construct($logActivity=false)
     {
@@ -48,10 +49,9 @@ class HttpHelper
     {
         $options = array();
         $debug = false;
+        $this->lastAnswerHeaders = null;
+        $options['trace'] = 1;
 
-        if ($debug) {
-            $options['trace'] = 1;
-        }
         $client = new \SoapClient($wsdl, $options);
 
         if (is_array($cookie)) {
@@ -74,6 +74,10 @@ class HttpHelper
             echo "REQUEST:\n" . $client->__getLastRequest() . "\n\n";
             echo "ANSWER:\n" . $client->__getLastResponse() . "\n\n";
         }
+
+        try {
+            $this->lastAnswerHeaders = $this->http_parse_headers($client->__getLastResponseHeaders());
+        } catch (\Exception $e) {}
 
         return $json;
     }
@@ -112,6 +116,7 @@ class HttpHelper
     {
         $log = $this->log;
         $ch = curl_init();
+        $lastAnswerHeaders = null;
 
         if (!$data) {
             $data = array();
@@ -272,5 +277,43 @@ class HttpHelper
         }
 
         return $frag['scheme']. '://' . $frag['host'].":". $frag['port'] . $frag['path'] ."?" . $queryString;
+    }
+
+    public function getlastAnswerHeaders()
+    {
+        if (!$this->lastAnswerHeaders) {
+            return array();
+        }
+
+        return $this->lastAnswerHeaders;
+    }
+
+    private function http_parse_headers($raw_headers)
+    {
+        $headers = array();
+        $key = '';
+
+        foreach (explode("\n", $raw_headers) as $i => $h) {
+            $h = explode(':', $h, 2);
+
+            if (isset($h[1])) {
+                if (!isset($headers[$h[0]]))
+                    $headers[$h[0]] = trim($h[1]);
+                elseif (is_array($headers[$h[0]])) {
+                    $headers[$h[0]] = array_merge($headers[$h[0]], array(trim($h[1])));
+                } else {
+                    $headers[$h[0]] = array_merge(array($headers[$h[0]]), array(trim($h[1])));
+                }
+
+                $key = strtolower($h[0]);
+            } else {
+                if (substr($h[0], 0, 1) == "\t")
+                    $headers[$key] .= "\r\n\t".trim($h[0]);
+                elseif (!$key)
+                    $headers[0] = trim($h[0]);
+            }
+        }
+
+        return $headers;
     }
 }
