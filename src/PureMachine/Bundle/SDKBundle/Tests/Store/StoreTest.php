@@ -282,18 +282,6 @@ class StoreTest extends WebTestCase
 
     /**
      * @code
-     * phpunit -v --filter testInitializeWithNonArrayValue -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
-     * @endcode
-     * @expectedException \PureMachine\Bundle\SDKBundle\Exception\StoreException
-     * @dataProvider fetchNonValidInitializeValues
-     */
-    public function testInitializeWithNonArrayValue($initValue)
-    {
-        $privateStore = new PrivateStore($initValue);
-    }
-
-    /**
-     * @code
      * phpunit -v --filter testDateTimeValueOnStore -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
      * @endcode
      */

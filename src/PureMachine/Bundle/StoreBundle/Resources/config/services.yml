@@ -1,0 +1,7 @@
+parameters:
+#    pure_machine_store.example.class: PureMachine\Bundle\StoreBundle\Example
+
+services:
+#    pure_machine_store.example:
+#        class: %pure_machine_store.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]

@@ -13,8 +13,6 @@ use PureMachine\Bundle\SDKBundle\Store\Type\Boolean;
  */
 class StoreHelper
 {
-    private static $validator;
-
     public static function isInstanceOf($object, array $classArray)
     {
         foreach($classArray as $class)
@@ -41,12 +39,9 @@ class StoreHelper
     }
 
     public static function unSerialize($inValue, array $defaultClassNames,
-                                       $annotationReader=null, $symfonyContainer=null)
+                                       $deprecated=null)
     {
         if ($inValue instanceof BaseStore) {
-            if ($symfonyContainer && $inValue instanceof SymfonyBaseStore)
-            $inValue->setContainer($symfonyContainer);
-
             return $inValue;
         }
 
@@ -56,9 +51,7 @@ class StoreHelper
             if ($storeClass) {
                 $value = self::createClass(
                         $storeClass,
-                        $inValue,
-                        $annotationReader,
-                        $symfonyContainer
+                        $inValue
                         );
             } else {
                 $value = $inValue;
@@ -91,9 +84,7 @@ class StoreHelper
      */
     public static function createClass(
             $class,
-            $data,
-            $annotationReader=null,
-            $symfonyContainer=null
+            $data
             )
     {
         if (!class_exists($class)) {
@@ -104,13 +95,6 @@ class StoreHelper
             return null;
         }
         $store =  new $class($data);
-
-        if ($annotationReader) {
-            $store->setAnnotationReader($annotationReader);
-        }
-        if ($symfonyContainer && $store instanceof SymfonyBaseStore) {
-            $store->setContainer($symfonyContainer);
-        }
 
         return $store;
     }

@@ -343,12 +343,14 @@ class WebServiceClient
 
                 $propertyAssesor = "get" . ucfirst($property);
 
-                if (property_exists($value, $propertyAssesor)) {
+                if (property_exists($value, $property)) {
                     $propValue = $value->$propertyAssesor();
                 } else $propValue = '?';
 
                 $message .= ". value(type:" .gettype($propValue). ")";
-                if (is_scalar($propValue)) $message .= "='$propValue'";
+                if (is_scalar($propValue)) {
+                    $message .= "='$propValue'";
+                }
                 throw new WebServiceException($message, $errorCode);
             }
         //We have an array of object, and potentiallt stores
