@@ -1,6 +1,7 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Exception;
 
+use PureMachine\Bundle\SDKBundle\Store\ExceptionStore;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\Response;
 
@@ -30,14 +31,15 @@ class WebServiceException extends Exception
     {
         if ($answer->getStatus() != 'success') {
 
-            if ($displayStack) {
-                $stack = $answer->getAnswer()->getStack();
-                foreach($stack as $line) print "$line\n";
-            }
-
             if ($answer instanceof DebugErrorResponse) {
                 $message = $answer->getAnswer()->getMessage() ." \n";
                 $message .= $answer->getAnswer()->getDetailledMessage();
+
+                if ($displayStack) {
+                    $stack = $answer->getAnswer()->getStack();
+                    foreach($stack as $line) print "$line\n";
+                }
+
             } else {
                 $message = $answer->getAnswer()->getMessage();
             }
@@ -45,22 +47,23 @@ class WebServiceException extends Exception
             /**
              * Try to raise with the original exception class
              */
+            $exceptionStore = $answer->getAnswer();
+            if ($exceptionStore instanceof ExceptionStore) {
+                $class = $answer->getAnswer()->getExceptionClass();
+                if (class_exists($class)) {
+                    $ex = null;
+                    try {
+                        $ex = new $class($message, $answer->getAnswer()->getCode());
+                    } catch (\Exception $e) {}
 
-            $class = $answer->getAnswer()->getExceptionClass();
-            if (class_exists($class)) {
-                $ex = null;
-                try {
-                    $ex = new $class($message, $answer->getAnswer()->getCode());
-                } catch (\Exception $e) {}
-
-                if ($ex instanceof \Exception) {
-                    throw $ex;
+                    if ($ex instanceof \Exception) {
+                        throw $ex;
+                    }
                 }
             }
 
             $e = new WebServiceException($message, $answer->getAnswer()->getCode());
             $e->getStore()->setMessage($answer->getAnswer()->getMessage());
-            $e->getStore()->setDetailledMessage($answer->getAnswer()->getDetailledMessage());
             $e->getStore()->setCode($answer->getAnswer()->getCode());
             throw $e;
         }

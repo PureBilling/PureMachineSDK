@@ -14,32 +14,32 @@ class HttpRequestEvent extends Event
     /**
      * @var BaseStore
      */
-    private $inputData;
+    protected $inputData;
 
     /**
      * @var BaseStore
      */
-    private $outputData;
+    protected $outputData;
 
     /**
      * @var string
      */
-    private $originalUrl;
+    protected $originalUrl;
 
     /**
      * @var string
      */
-    private $method;
+    protected $method;
 
     /**
      * @var integer
      */
-    private $httpAnswerCode;
+    protected $httpAnswerCode;
 
     /**
      * @var array
      */
-    private $metadata;
+    protected $metadata;
 
     public function __construct(
         $inputData,
@@ -79,6 +79,16 @@ class HttpRequestEvent extends Event
     }
 
     /**
+     * Return outputData
+     *
+     * @return BaseStore
+     */
+    public function setOutputData($outputData)
+    {
+        $this->outputData = $outputData;
+    }
+
+    /**
      * @return string
      */
     public function getOriginalUrl()
@@ -112,5 +122,20 @@ class HttpRequestEvent extends Event
         }
 
         return null;
+    }
+
+    public function setHttpAnswerCode($code)
+    {
+        $this->httpAnswerCode = $code;
+    }
+
+    public function setMetadata($meta)
+    {
+        $this->metadata = $meta;
+    }
+
+    public function setMetadataValue($key, $value)
+    {
+        $this->metadata[$key] = $value;
     }
 }
