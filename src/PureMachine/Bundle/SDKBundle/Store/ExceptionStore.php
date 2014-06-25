@@ -46,6 +46,12 @@ class ExceptionStore extends Base\BaseStore
     protected $line;
 
     /**
+     * @Store\Property(description="Support ticket ID")
+     * @Assert\Type("string")
+     */
+    protected $ticket;
+
+    /**
      * @Store\Property(description="detailled message if any")
      * @Assert\Type("string")
      */

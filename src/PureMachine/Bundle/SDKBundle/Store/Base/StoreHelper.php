@@ -20,6 +20,12 @@ class StoreHelper
         return false;
     }
 
+    /**
+     * @param $inValue
+     * @param  bool     $includePrivate
+     * @param  bool     $includeInternal
+     * @return stdClass
+     */
     public static function serialize($inValue, $includePrivate=false, $includeInternal=true)
     {
         if ($inValue instanceof BaseStore) {

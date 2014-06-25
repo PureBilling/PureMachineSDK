@@ -41,6 +41,11 @@ class HttpRequestEvent extends Event
      */
     protected $metadata;
 
+    /**
+     * @var BaseStore
+     */
+    protected $ticket;
+
     public function __construct(
         $inputData,
         $outputData,
@@ -137,5 +142,15 @@ class HttpRequestEvent extends Event
     public function setMetadataValue($key, $value)
     {
         $this->metadata[$key] = $value;
+    }
+
+    public function setTicket($ticket)
+    {
+        $this->ticket = $ticket;
+    }
+
+    public function getTicket()
+    {
+        return $this->ticket;
     }
 }
