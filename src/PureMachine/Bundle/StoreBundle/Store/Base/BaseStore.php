@@ -62,6 +62,34 @@ abstract class BaseStore implements JsonSerializable
     }
 
     /**
+     * Handle serialize()
+     * Need to remove the private and static properties before serialize a store
+     *
+     */
+    public function __sleep()
+    {
+        $reflect = new \ReflectionClass($this);
+        $props = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED);
+        $propsSerialize = array();
+        foreach($props as $prop) {
+            $propsSerialize[] = $prop->getName();
+        }
+
+        return $propsSerialize;
+    }
+
+    /**
+     * Handle unserialize()
+     * Need to set the adapter object after unserialize a store
+     *
+     */
+    public function __wakeup()
+    {
+        $this->_adapter = StoreManager::getAdapter($this);
+
+    }
+
+    /**
      * @deprecated
      */
     public static function setAnnotationReader($annotationReader)

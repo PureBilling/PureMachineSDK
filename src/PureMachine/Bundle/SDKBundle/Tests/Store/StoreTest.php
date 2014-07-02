@@ -375,4 +375,26 @@ class StoreTest extends WebTestCase
         $store->validate();
         $store->raiseIfInvalid();
     }
+
+    /**
+     * @code
+     * phpunit -v --filter testSerializeUnserialize -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testSerializeUnserialize()
+    {
+        $store = new StoreClass\StoreA(array('titleA' => 'my title'));
+        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA', $store->get_className());
+        $this->assertTrue($store->validate());
+        $this->assertEquals('my title', $store->getTitleA());
+
+        $serialized = serialize($store);
+        $this->assertTrue(is_string($serialized));
+
+        unset($store);
+        $store = unserialize($serialized);
+        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA', $store->get_className());
+        $this->assertTrue($store->validate());
+        $this->assertEquals('my title', $store->getTitleA());
+    }
 }
