@@ -440,6 +440,11 @@ class WebServiceClient
     {
         if ($this->login) return array( $this->login, $this->password);
 
+        //Try to find the password inside symfony configuration
+        if ($this->isSymfony() && $this->symfonyContainer->hasParameter('pb_private_key')) {
+            return array('api', $this->symfonyContainer->getParameter('pb_private_key'));
+        }
+
         //Using static PureBilling as fallback
         if (class_exists('\PureBilling') && \PureBilling::getPrivateKey()) {
             return array('api', \PureBilling::getPrivateKey());
