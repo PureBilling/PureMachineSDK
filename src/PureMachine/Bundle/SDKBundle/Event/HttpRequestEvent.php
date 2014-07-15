@@ -20,6 +20,7 @@ class HttpRequestEvent extends Event
      * @var BaseStore
      */
     protected $outputData;
+    private $refreshOutputData = false;
 
     /**
      * @var string
@@ -152,5 +153,15 @@ class HttpRequestEvent extends Event
     public function getTicket()
     {
         return $this->ticket;
+    }
+
+    public function setRefreshOutputData($r)
+    {
+        $this->refreshOutputData = $r;
+    }
+
+    public function getRefreshOutputData()
+    {
+        return $this->refreshOutputData;
     }
 }
