@@ -7,6 +7,8 @@ class Exception extends \Exception
 {
     private $exceptionStore;
 
+    private $metadata;
+
     const DEFAULT_ERROR_CODE = 'GENERIC_001';
 
     const GENERIC_001 = 'GENERIC_001';
@@ -78,6 +80,23 @@ class Exception extends \Exception
     public function getErrorCode()
     {
         return $this->exceptionStore->getCode();
+    }
+
+    public function addMetadata($key, $value)
+    {
+        $this->exceptionStore->addMetadata($key, $value);
+    }
+
+    public function getMetadata()
+    {
+        return $this->exceptionStore->getMetadata();
+    }
+
+    public function setMetadata($value)
+    {
+        $this->exceptionStore->setMetadata($value);
+
+        return $this;
     }
 
     /**
