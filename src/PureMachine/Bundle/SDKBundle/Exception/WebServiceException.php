@@ -34,8 +34,6 @@ class WebServiceException extends Exception
 
             if ($answer instanceof ErrorResponse) {
 
-                print $answer;
-
                 $message = $answer->getAnswer()->getMessage() ." \n";
 
                 if ($answer->getAnswer()->isStoreProperty('detailledMessage')) {
