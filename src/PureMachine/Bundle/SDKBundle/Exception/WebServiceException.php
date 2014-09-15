@@ -3,6 +3,7 @@ namespace PureMachine\Bundle\SDKBundle\Exception;
 
 use PureMachine\Bundle\SDKBundle\Store\ExceptionStore;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
+use PureMachine\Bundle\SDKBundle\Store\WebService\ErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\Response;
 
 class WebServiceException extends Exception
@@ -31,11 +32,17 @@ class WebServiceException extends Exception
     {
         if ($answer->getStatus() != 'success') {
 
-            if ($answer instanceof DebugErrorResponse) {
-                $message = $answer->getAnswer()->getMessage() ." \n";
-                $message .= $answer->getAnswer()->getDetailledMessage();
+            if ($answer instanceof ErrorResponse) {
 
-                if ($displayStack) {
+                print $answer;
+
+                $message = $answer->getAnswer()->getMessage() ." \n";
+
+                if ($answer->getAnswer()->isStoreProperty('detailledMessage')) {
+                    $message .= $answer->getAnswer()->getDetailledMessage();
+                }
+
+                if ($displayStack && ($answer instanceof DebugErrorResponse)) {
                     $stack = $answer->getAnswer()->getStack();
                     foreach($stack as $line) print "$line\n";
                 }
