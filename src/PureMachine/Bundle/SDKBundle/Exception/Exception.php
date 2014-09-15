@@ -7,8 +7,6 @@ class Exception extends \Exception
 {
     private $exceptionStore;
 
-    private $metadata;
-
     const DEFAULT_ERROR_CODE = 'GENERIC_001';
 
     const GENERIC_001 = 'GENERIC_001';
