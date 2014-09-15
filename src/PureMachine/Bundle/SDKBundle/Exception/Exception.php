@@ -80,6 +80,23 @@ class Exception extends \Exception
         return $this->exceptionStore->getCode();
     }
 
+    public function addMetadata($key, $value)
+    {
+        $this->exceptionStore->addMetadata($key, $value);
+    }
+
+    public function getMetadata()
+    {
+        return $this->exceptionStore->getMetadata();
+    }
+
+    public function setMetadata($value)
+    {
+        $this->exceptionStore->setMetadata($value);
+
+        return $this;
+    }
+
     /**
      * Build a exceptionStore from a PHP Exception
      * @param \Exception $e

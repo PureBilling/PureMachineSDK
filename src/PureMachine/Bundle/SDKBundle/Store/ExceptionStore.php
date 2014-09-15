@@ -63,6 +63,12 @@ class ExceptionStore extends Base\BaseStore
      */
     protected $messages = array();
 
+    /**
+     * @Store\Property(description="data manually added")
+     * @Assert\Type("array")
+     */
+    protected $metadata = array();
+
     public function addMessage($key, $value)
     {
         $this->messages[$key] = $value;
@@ -73,4 +79,12 @@ class ExceptionStore extends Base\BaseStore
         return $this->getMessage(). ": " . $this->getDetailledMessage()
                ." in " . $this->getFile() .":" . $this->getLine();
     }
+
+    public function addMetadata($key, $value)
+    {
+        $this->metadata[$key] = $value;
+
+        return $this;
+    }
+
 }
