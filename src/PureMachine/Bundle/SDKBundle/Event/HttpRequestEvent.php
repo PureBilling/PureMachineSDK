@@ -145,6 +145,11 @@ class HttpRequestEvent extends Event
         $this->metadata[$key] = $value;
     }
 
+    public function mergeMetadata($meta)
+    {
+        $this->metadata = array_merge($this->metadata, $meta);
+    }
+
     public function setTicket($ticket)
     {
         $this->ticket = $ticket;

@@ -48,6 +48,7 @@ class HttpHelper
     public function getSoapResponse($wsdl, $function, $data, $cookie=null)
     {
         $options = array();
+        $start = microtime(true);
         $debug = false;
         $this->lastAnswerHeaders = null;
         $options['trace'] = 1;
@@ -63,11 +64,13 @@ class HttpHelper
         try {
             $json = $client->__soapCall($function, $data);
         } catch (\Exception $e) {
-            $this->triggerHttpRequestEvent($data, $e->getMessage(), $wsdl, 'SOAP', 500);
+            $duration = microtime(true) - $start;
+            $this->triggerHttpRequestEvent($data, $e->getMessage(), $wsdl, 'SOAP', 500, $duration);
             throw $e;
         }
 
-        $this->triggerHttpRequestEvent($data, json_encode($json), $wsdl, 'SOAP', 200);
+        $duration = microtime(true) - $start;
+        $this->triggerHttpRequestEvent($data, json_encode($json), $wsdl, 'SOAP', 200, $duration);
 
         if ($debug) {
             echo "/****** calling $function on $wsdl *******/\n\n";
@@ -117,6 +120,7 @@ class HttpHelper
         $log = $this->log;
         $ch = curl_init();
         $lastAnswerHeaders = null;
+        $start = microtime(true);
 
         if (!$data) {
             $data = array();
@@ -161,6 +165,7 @@ class HttpHelper
         $curlErrorNo = curl_errno($ch);
         curl_close($ch);
         $statusCode = $info['http_code'];
+        $duration = microtime(true) - $start;
 
         if ($statusCode == 0) {
             $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
@@ -168,7 +173,7 @@ class HttpHelper
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
-            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
 
@@ -179,7 +184,7 @@ class HttpHelper
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
-            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
 
@@ -190,7 +195,7 @@ class HttpHelper
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
-            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
 
@@ -200,11 +205,11 @@ class HttpHelper
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
-            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
 
-        $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode);
+        $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
 
         return $output;
     }
@@ -227,7 +232,7 @@ class HttpHelper
         $this->metadata['disableEvent'] = true;
     }
 
-    private function triggerHttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code)
+    private function triggerHttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code, $duration)
     {
         /**
          * Event can be desactived by Metadatas
@@ -244,6 +249,7 @@ class HttpHelper
                 $inputData = $inputData['json'];
             }
 
+            $this->metadata['duration'] = $duration;
             $event = new HttpRequestEvent($inputData, $outputData, $originalUrl, $method, $code, $this->metadata);
             $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.httphelper.request", $event);

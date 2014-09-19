@@ -42,4 +42,10 @@ class Response extends BaseStore
      * @Assert\NotBlank
      */
     protected $answer;
+
+    /**
+     * @Store\Property(description="Support ticket")
+     * @Assert\Type("string")
+     */
+    protected $ticket;
 }
