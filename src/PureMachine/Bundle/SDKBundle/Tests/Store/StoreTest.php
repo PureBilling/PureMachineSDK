@@ -282,24 +282,34 @@ class StoreTest extends WebTestCase
 
     /**
      * @code
-     * phpunit -v --filter testDateTimeValueOnStore -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * ./bin/phpunit -v --filter testDateTimeValueOnStore -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
      * @endcode
      */
     public function testDateTimeValueOnStore()
     {
-        $newRef = new \DateTime("now");
+        /**
+         * Getter / setter test
+         */
+        $dt = \DateTime::createFromFormat('Y-m-d H:i:s','2014-08-01 00:00:00', new \DateTimeZone('Europe/Madrid'));
         $sampleStore = new StoreDateTime();
-        $sampleStore->setValue($newRef);
+        $sampleStore->setValue($dt);
+
+        $getDt = $sampleStore->getValue()->format('Y-m-d H:i:s');
+        $tz = $sampleStore->getValue()->getTimezone();
+        $this->assertEquals('2014-08-01 00:00:00', $getDt);
 
         //The serialize value should be the unix timestamp
         $serializedStore = $sampleStore->serialize();
         $this->assertTrue(is_int($serializedStore->value));
-        $this->assertEquals((int) $newRef->format("U"), $serializedStore->value);
+        $this->assertEquals($dt->getTimestamp(), $serializedStore->value);
 
         //Getting the datetime should return a DateTime object
         $fetchedValue = $sampleStore->getValue();
         $this->assertTrue($fetchedValue instanceof \DateTime);
-        $this->assertEquals($newRef->format("U"), $fetchedValue->format("U"));
+        $this->assertEquals($dt->getTimestamp(), $fetchedValue->getTimestamp());
+
+        $getDt = $sampleStore->getValue()->format('Y-m-d H:i:s');
+        $this->assertEquals('2014-08-01 00:00:00', $getDt);
 
         //Trying to construct a negative timestamp
         try {

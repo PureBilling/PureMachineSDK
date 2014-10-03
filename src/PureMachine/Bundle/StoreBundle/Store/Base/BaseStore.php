@@ -423,7 +423,9 @@ abstract class BaseStore implements JsonSerializable
             switch ($propertyDefinition->type) {
                 case 'datetime':
                     if (is_numeric($this->$property)) {
-                        return new \DateTime("@".$this->$property);
+                        $dt = new \DateTime();
+                        $dt->setTimestamp($this->$property);
+                        return $dt;
                         break;
                     }
 
