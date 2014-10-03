@@ -294,8 +294,9 @@ class StoreTest extends WebTestCase
         $sampleStore = new StoreDateTime();
         $sampleStore->setValue($dt);
 
-        $getDt = $sampleStore->getValue()->format('Y-m-d H:i:s');
-        $tz = $sampleStore->getValue()->getTimezone();
+        $dtOut = $sampleStore->getValue();
+        $dtOut->setTimezone(new \DateTimeZone('Europe/Madrid'));
+        $getDt = $dtOut->format('Y-m-d H:i:s');
         $this->assertEquals('2014-08-01 00:00:00', $getDt);
 
         //The serialize value should be the unix timestamp
@@ -308,7 +309,9 @@ class StoreTest extends WebTestCase
         $this->assertTrue($fetchedValue instanceof \DateTime);
         $this->assertEquals($dt->getTimestamp(), $fetchedValue->getTimestamp());
 
-        $getDt = $sampleStore->getValue()->format('Y-m-d H:i:s');
+        $dtOut = $sampleStore->getValue();
+        $dtOut->setTimezone(new \DateTimeZone('Europe/Madrid'));
+        $getDt = $dtOut->format('Y-m-d H:i:s');
         $this->assertEquals('2014-08-01 00:00:00', $getDt);
 
         //Trying to construct a negative timestamp
