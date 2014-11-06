@@ -2,8 +2,8 @@
 
 namespace PureMachine\Bundle\SDKBundle\Service;
 
-use PureMachine\Bundle\SDKBundle\Store\LogStore;
 use PureMachine\Bundle\SDKBundle\Exception\HTTPException;
+use PureMachine\Bundle\SDKBundle\Store\LogStore;
 use PureMachine\Bundle\SDKBundle\Event\HttpRequestEvent;
 
 class HttpHelper
@@ -94,7 +94,7 @@ class HttpHelper
         if ($json == null) {
             $getUrl = $this->getFullUrl($url, $data);
             $errorMessage = "can't decode JSON output";
-            $e = new HTTPException($errorMessage);
+            $e = $this->createException($errorMessage);
             $e->addMessage('json decoder error', json_last_error());
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
@@ -169,7 +169,7 @@ class HttpHelper
 
         if ($statusCode == 0) {
             $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
-            $e = new HTTPException($message);
+            $e = $this->createException($message);
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
@@ -178,7 +178,7 @@ class HttpHelper
         }
 
         if ($statusCode == 404) {
-            $e = new HTTPException("HTTP exception: error " . $statusCode ." for ". $url
+            $e = $this->createException("HTTP exception: error " . $statusCode ." for ". $url
                                   ." . Page or service not found.",
                                   HTTPException::HTTP_404);
             $e->addMessage('output', $output);
@@ -189,7 +189,7 @@ class HttpHelper
         }
 
         if ($statusCode == 401) {
-            $e = new HTTPException("HTTP exception: error " . $statusCode ." for ". $url
+            $e = $this->createException("HTTP exception: error " . $statusCode ." for ". $url
                                   ." . Invalid credentials.",
                                    HTTPException::HTTP_401);
             $e->addMessage('output', $output);
@@ -201,7 +201,7 @@ class HttpHelper
 
         if ($statusCode != 200) {
             $errorMessage = "HTTP exception: error " . $statusCode . " for $url";
-            $e = new HTTPException($errorMessage);
+            $e = $this->createException($errorMessage, HTTPException::HTTP_500);
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
@@ -292,6 +292,11 @@ class HttpHelper
         }
 
         return $this->lastAnswerHeaders;
+    }
+
+    protected function createException($message, $code=null)
+    {
+        return new HTTPException($message, $code);
     }
 
     private function http_parse_headers($raw_headers)
