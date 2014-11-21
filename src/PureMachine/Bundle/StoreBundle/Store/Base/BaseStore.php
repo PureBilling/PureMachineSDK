@@ -15,6 +15,8 @@ abstract class BaseStore implements JsonSerializable
 {
     private static $jsonSchema = array();
     private $_adapter = null;
+    private $_storePropertiesCache = array();
+    private $_jsonSchema = array();
 
     /**
      * Array of ConstraintViolation instances
@@ -50,6 +52,11 @@ abstract class BaseStore implements JsonSerializable
         $this->_className = get_class($this);
         $this->_adapter = StoreManager::getAdapter($this);
 
+        //Instance caches
+        $schema = $this->getJsonSchema();
+        $this->_jsonSchema = $schema;
+        $this->_storePropertiesCache = array_keys($schema['definition']);
+
         if (is_array($data) ||($data instanceof \stdClass)) {
             $this->initialize($data);
         } else {
@@ -71,7 +78,7 @@ abstract class BaseStore implements JsonSerializable
         $reflect = new \ReflectionClass($this);
         $props = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED);
         $propsSerialize = array();
-        foreach($props as $prop) {
+        foreach ($props as $prop) {
             $propsSerialize[] = $prop->getName();
         }
 
@@ -86,6 +93,10 @@ abstract class BaseStore implements JsonSerializable
     public function __wakeup()
     {
         $this->_adapter = StoreManager::getAdapter($this);
+        //Instance caches
+        $schema = $this->getJsonSchema();
+        $this->_jsonSchema = $schema;
+        $this->_storePropertiesCache = array_keys($schema['definition']);
 
     }
 
@@ -165,23 +176,24 @@ abstract class BaseStore implements JsonSerializable
     public function serialize($includePrivate=false, $includeInternal=true)
     {
         $answer = array();
-        $schema = $this->getJsonSchema();
-        foreach ($schema->definition as $property => $definition) {
+        $schema = $this->_jsonSchema;
+
+        foreach ($schema['definition'] as $property => $definition) {
             $method = 'get' . ucfirst($property);
 
             //Checking special types
-            if ($definition->private == true && !$includePrivate) {
+            if ($definition['private'] == true && !$includePrivate) {
                 continue;
             }
 
-            if ($definition->internal == true && !$includeInternal) {
+            if ($definition['internal'] == true && !$includeInternal) {
                 continue;
             }
 
             $valueFromMethod = $this->$method();
 
-            if (isset($definition->type)) {
-                switch ($definition->type) {
+            if (isset($definition['type'])) {
+                switch ($definition['type']) {
                     case "datetime":
                         $valueFromMethod = $this->$property; //Integer value
                         break;
@@ -193,8 +205,8 @@ abstract class BaseStore implements JsonSerializable
             /**
              * Add aliases
              */
-            if ($definition->alias) {
-                $alias = $definition->alias;
+            if ($definition['alias']) {
+                $alias = $definition['alias'];
                 $method = 'get' . ucfirst($alias);
                 if (method_exists($this, $method)) {
                     $answer[$alias] = $this->$method();
@@ -216,13 +228,13 @@ abstract class BaseStore implements JsonSerializable
     {
         //Force conversion to array
         if (is_object($data)) $data = (array) $data;
-        $schema = $this->getJsonSchema();
+        $schema = $this->_jsonSchema;
 
         /*
         * Alias management
         */
-        foreach ($schema->definition as $property => $definition) {
-            $alias = $definition->alias;
+        foreach ($schema['definition'] as $property => $definition) {
+            $alias = $definition['alias'];
             if ($alias && array_key_exists($alias, $data)) {
                 $method = 'set' . ucfirst($alias);
                 if (method_exists($this, $method)) {
@@ -238,12 +250,12 @@ abstract class BaseStore implements JsonSerializable
          * Also create empty composed Store
          */
 
-        foreach ($schema->definition as $property => $definition) {
-            if (!$this->isStoreProperty($property)) {
+        foreach ($schema['definition'] as $property => $definition) {
+            if (!in_array($property, $this->_storePropertiesCache)) {
                 continue;
             }
 
-            if ($definition->internal) {
+            if ($definition['internal']) {
                 continue;
             }
 
@@ -252,20 +264,24 @@ abstract class BaseStore implements JsonSerializable
                 if (is_string($data)) {
                     throw new StoreException(
                         "Error initializing the store. Expected array on init data but got string : '".$data."'"
+                        . " for property $property"
                     );
                 } elseif (is_bool($data)) {
                     $value = "true";
                     if(!$data) $value = "false";
                     throw new StoreException(
                         "Error initializing the store. Expected array on init data but got boolean with (".$data.") value"
+                        . " for property $property"
                     );
                 } elseif (is_numeric($data)) {
                     throw new StoreException(
                         "Error initializing the store. Expected array on init data but got a numeric value : ".$data
+                        . " for property $property"
                     );
                 } else {
                     throw new StoreException(
                         "Error initializing the store. Expected array on init data but got ".gettype($data)
+                        . " for property $property"
                     );
                 }
             }
@@ -280,7 +296,7 @@ abstract class BaseStore implements JsonSerializable
              * if we receive a array, but it's defined as object, we convert it
              * If not, the cast to Store is not done
              */
-            if ($definition->type == 'object' && is_array($value)) {
+            if ($definition['type'] == 'object' && is_array($value)) {
                 $value = (object) $value;
                 $data[$property] = $value;
             }
@@ -288,7 +304,7 @@ abstract class BaseStore implements JsonSerializable
             /**
              * unSerialize Value
              */
-            if (isset($definition->storeClasses)) $storeClasses = $definition->storeClasses;
+            if (isset($definition['storeClasses'])) $storeClasses = $definition['storeClasses'];
             else $storeClasses = array();
 
             $storeClass = StoreHelper::getStoreClass(null, $storeClasses);
@@ -296,16 +312,16 @@ abstract class BaseStore implements JsonSerializable
             if ($value) {
                 $value = StoreHelper::unSerialize($value, $storeClasses,
                     StoreManager::getAnnotationReader());
-            } elseif ($storeClass && $definition->type == 'object') {
+            } elseif ($storeClass && $definition['type'] == 'object') {
 
                 /**
                  * We create a store with no values only if it's NotNone
                  */
-                if (in_array('NotBlank', $definition->validationConstraints)) {
+                if (in_array('NotBlank', $definition['validationConstraints'])) {
                     $value = StoreHelper::createClass($storeClass, $data);
                 }
 
-            } elseif ($definition->type == 'array')
+            } elseif ($definition['type'] == 'array')
                 $value = array();
 
             if (!is_null($value)) {
@@ -369,14 +385,9 @@ abstract class BaseStore implements JsonSerializable
                         .get_class($this),
                         StoreException::STORE_005);
                 }
-                //Retrieving definition
-                $jsonSchema = $this->getJsonSchema();
-                if (isset($jsonSchema->definition->$property)) {
-                    $propertyDefinition = $jsonSchema->definition->$property;
-                }
 
                 //FIXME: Change tracking does not support array addition or deletion.
-                if ($this->isStoreProperty($property)) {
+                if (in_array($property, $this->_storePropertiesCache)) {
                     $arrayToAdd = &$this->$property;
                     if (count($arguments) == 1) {
                         $arrayToAdd[] = $arguments[0];
@@ -405,26 +416,23 @@ abstract class BaseStore implements JsonSerializable
             return call_user_func_array(array($this,$method),array($index));
         }
 
-        if (!$this->isStoreProperty($property)) {
+        if (!in_array($property, $this->_storePropertiesCache)) {
             throw new StoreException("$property is not a store property in "
                 .get_class($this),
                 StoreException::STORE_005);
         }
 
-        //Retrieving definition
-        $jsonSchema = $this->getJsonSchema();
-        if (isset($jsonSchema->definition->$property)) {
-            $propertyDefinition = $jsonSchema->definition->$property;
-        }
+        $propertyDefinition = $this->_jsonSchema['definition'][$property];
 
         //Special retrieving of properties
-        if (isset($propertyDefinition) && isset($propertyDefinition->type)) {
+        if (isset($propertyDefinition) && isset($propertyDefinition['type'])) {
             //Checking the definition of the property
-            switch ($propertyDefinition->type) {
+            switch ($propertyDefinition['type']) {
                 case 'datetime':
                     if (is_numeric($this->$property)) {
                         $dt = new \DateTime();
                         $dt->setTimestamp($this->$property);
+
                         return $dt;
                         break;
                     }
@@ -451,22 +459,19 @@ abstract class BaseStore implements JsonSerializable
             return call_user_func_array(array($this,$method),array($value));
         }
 
-        if (!$this->isStoreProperty($property)) {
+        if (!in_array($property, $this->_storePropertiesCache)) {
             throw new StoreException("$property is not a store property in "
                 .get_class($this),
                 StoreException::STORE_005);
         }
 
         //Retrieving definition
-        $jsonSchema = $this->getJsonSchema();
-        if (isset($jsonSchema->definition->$property)) {
-            $propertyDefinition = $jsonSchema->definition->$property;
-        }
+        $propertyDefinition = $this->_jsonSchema['definition'][$property];
 
         //Special setting of properties
-        if ($value && isset($propertyDefinition) && isset($propertyDefinition->type)) {
+        if ($value && isset($propertyDefinition) && isset($propertyDefinition['type'])) {
             //Checking the definition of the property
-            switch ($propertyDefinition->type) {
+            switch ($propertyDefinition['type']) {
                 case 'datetime':
                     if (is_numeric($value) && ($value>0)) {
                         //Auto conversion for numeric values into datetime as Unix timestamp
@@ -511,9 +516,7 @@ abstract class BaseStore implements JsonSerializable
 
     public function isStoreProperty($property)
     {
-        $schema = $this->getJsonSchema();
-
-        return isset($property, $schema->definition->$property);
+        return in_array($property, $this->_storePropertiesCache);
     }
 
     /**
@@ -524,11 +527,31 @@ abstract class BaseStore implements JsonSerializable
     public static function getJsonSchema($deprecated=null)
     {
         $class = get_called_class();
-        if(array_key_exists($class, self::$jsonSchema)) return self::$jsonSchema[$class];
+
+        /**
+         * Look in local cache
+         */
+        if (array_key_exists($class, self::$jsonSchema)) {
+            return self::$jsonSchema[$class];
+        }
+
+        /**
+         * If not in local cache, we ask to the adaptor
+         */
+        $adapter = StoreManager::getAdapter($class);
+        if ($adapter) {
+            $schema = $adapter->getJsonSchema($class);
+            if ($schema) {
+                if (!array_key_exists($class, self::$jsonSchema)) {
+                    self::$jsonSchema[$class] = $schema;
+                }
+
+                return $schema;
+            }
+        }
 
         $annotationReader = StoreManager::getAnnotationReader();
         $definition = array();
-        $adapter = StoreManager::getAdapter($class);
 
         $reflect = new \ReflectionClass($class);
         $props = $reflect->getProperties(\ReflectionProperty::IS_PROTECTED);
@@ -536,36 +559,39 @@ abstract class BaseStore implements JsonSerializable
         foreach ($props as $prop) {
             $property = $prop->getName();
             $annotations = $annotationReader->getPropertyAnnotations($prop);
-            $definition[$property]  = new \stdClass();
-            $definition[$property]->storeClasses = array();
-            $definition[$property]->allowedId = array();
-            $definition[$property]->validationConstraints = array();
+            $definition[$property]  = array();
+            $definition[$property]['storeClasses'] = array();
+            $definition[$property]['allowedId'] = array();
+            $definition[$property]['validationConstraints'] = array();
 
-            foreach ($annotations AS $annotation) {
+            foreach ($annotations as $annotation) {
                 if ($annotation instanceof Store\Property) {
-                    $definition[$property]->description = $annotation->description;
-                    $definition[$property]->private = $annotation->private;
+                    $definition[$property]['description'] = $annotation->description;
+                    $definition[$property]['private'] = $annotation->private;
 
                     if (substr($property,0,1) == "_") {
-                        $definition[$property]->internal = true;
+                        $definition[$property]['internal'] = true;
                     } else {
-                        $definition[$property]->internal = false;
+                        $definition[$property]['internal'] = false;
                     }
 
-                    $definition[$property]->alias = $annotation->alias;
-                    $definition[$property]->recommended = $annotation->recommended;
+                    $definition[$property]['alias'] = $annotation->alias;
+                    $definition[$property]['recommended'] = $annotation->recommended;
                 } elseif ($annotation instanceof Store\StoreClass) {
-                    $definition[$property]->storeClasses = (array) $annotation->value;
+                    $definition[$property]['storeClasses'] = (array) $annotation->value;
                 } elseif ($annotation instanceof Assert\Type) {
-                    $definition[$property]->type = $annotation->type;
+                    $definition[$property]['type'] = $annotation->type;
                 } elseif ($annotation instanceof Constraint) {
-                    $definition[$property]->validationConstraints[] = static::getClassName($annotation);
+                    $definition[$property]['validationConstraints'][] = static::getClassName($annotation);
                 } elseif ($annotation instanceof Store\AllowedId) {
-                    $definition[$property]->allowedId = (array) $annotation->value;
+                    $definition[$property]['allowedId'] = (array) $annotation->value;
                 }
 
                 if ($adapter) {
-                    $adapter->extendStoreSchema($annotation, $property, $definition);
+                    $newDef = $adapter->extendStoreSchema($annotation, $property, $definition);
+                    if (is_array($newDef)) {
+                        $definition[$property] = array_merge($newDef, $definition[$property]);
+                    }
                 }
             }
         }
@@ -577,22 +603,26 @@ abstract class BaseStore implements JsonSerializable
         $error = StoreException::STORE_003;
         foreach ($definition as $prop => $propertyDefinition) {
             //Remove added properties that are not store property.
-            if (!isset($propertyDefinition->description)) {
+            if (!isset($propertyDefinition['description'])) {
                 unset($definition[$prop]);
                 continue;
             }
 
-            if (!isset($propertyDefinition->type))
+            if (!isset($propertyDefinition['type']))
                 //throw new \Exception ("$class->$prop must have Assert\Type(\"type\") defined.");
                 throw new StoreException("$class->$prop must have Assert\Type(\"type\") defined.", $error);
-            if (!$propertyDefinition->type)
+            if (!$propertyDefinition['type'])
                 throw new StoreException("$class->$prop must have Assert\Type(\"type\") defined.", $error);
         }
 
-        self::$jsonSchema[$class] = new \stdClass();
-        self::$jsonSchema[$class]->definition = (object) $definition;
-        self::$jsonSchema[$class]->configuration = new \stdClass();
-        self::$jsonSchema[$class]->configuration->_className = $class;
+        self::$jsonSchema[$class] = array();
+        self::$jsonSchema[$class]['definition'] = $definition;
+        self::$jsonSchema[$class]['configuration'] = array();
+        self::$jsonSchema[$class]['configuration']['_className'] = $class;
+
+        if ($adapter) {
+            $adapter->cacheJsonSchema($class, self::$jsonSchema[$class]);
+        }
 
         return self::$jsonSchema[$class];
     }
@@ -652,17 +682,17 @@ abstract class BaseStore implements JsonSerializable
         /*
          * All child stores should be validated
          */
-        $jsonSchema = self::getJsonSchema();
-        foreach ($jsonSchema->definition as $propertyName=>$prodSchema) {
-            if ($prodSchema->type=="object" || $prodSchema->type=="id") {
-                if ($prodSchema->type=="id" && is_scalar($this->$propertyName)) continue;
+        $jsonSchema = $this->_jsonSchema;
+        foreach ($jsonSchema['definition'] as $propertyName=>$prodSchema) {
+            if ($prodSchema['type']=="object" || $prodSchema['type']=="id") {
+                if ($prodSchema['type']=="id" && is_scalar($this->$propertyName)) continue;
 
                 /**
                  * we enter here if we are not able to unserialize the object
                  * because it does not have a valid _className property, or/and there
                  * is two StoreClasses possible
                  */
-                if ($this->$propertyName instanceof \stdClass && count($prodSchema->storeClasses)) {
+                if ($this->$propertyName instanceof \stdClass && count($prodSchema['storeClasses'])) {
 
                     if (isset($this->$propertyName->_className)) {
                         $className = $this->$propertyName->_className;
@@ -673,7 +703,7 @@ abstract class BaseStore implements JsonSerializable
                             $this->addViolation($propertyName, "$propertyName ->_className '$className' store class does not exists ");
                         }
 
-                        if (!in_array($className, $prodSchema->storeClasses)) {
+                        if (!in_array($className, $prodSchema['storeClasses'])) {
                             $this->addViolation($propertyName, "$propertyName ->_className is not allowed here");
                         }
                     }
@@ -703,11 +733,11 @@ abstract class BaseStore implements JsonSerializable
                         );
                     }
                 }
-            } elseif ($prodSchema->type=="array" && count($prodSchema->storeClasses) >0
+            } elseif ($prodSchema['type']=="array" && count($prodSchema['storeClasses']) >0
                 && is_array($this->$propertyName)) {
 
                 foreach ($this->$propertyName as $store) {
-                    if (!StoreHelper::checkStoreClass($store, $prodSchema->storeClasses, $prodSchema->allowedId)) {
+                    if (!StoreHelper::checkStoreClass($store, $prodSchema['storeClasses'], $prodSchema['allowedId'])) {
                         $this->addViolation($propertyName, "'$propertyName' array element has a wrong "
                             ."store type.");
                     }

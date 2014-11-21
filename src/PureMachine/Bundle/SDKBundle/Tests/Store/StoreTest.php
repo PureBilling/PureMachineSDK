@@ -48,18 +48,18 @@ class StoreTest extends WebTestCase
         $this->assertTrue(is_array($store->getArrayOfComposedStore()));
 
         //Test get Json defintion
-        $schema = $store->getJsonSchema()->definition;
+        $schema = $store->getJsonSchema()['definition'];
 
         $this->assertEquals(7, count((array) $schema));
-        $this->assertEquals(9, count((array) $schema->testProperty));
-        $this->assertEquals('string', $schema->testProperty->type);
-        $this->assertEquals('testProperty', $schema->testProperty->description);
+        $this->assertEquals(9, count((array) $schema['testProperty']));
+        $this->assertEquals('string', $schema['testProperty']['type']);
+        $this->assertEquals('testProperty', $schema['testProperty']['description']);
 
-        $this->assertEquals('object', $schema->composedStore->type);
-        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\ComposedStore', $schema->composedStore->storeClasses[0]);
+        $this->assertEquals('object', $schema['composedStore']['type']);
+        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\ComposedStore', $schema['composedStore']['storeClasses'][0]);
 
-        $this->assertEquals('array', $schema->arrayOfComposedStore->type);
-        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\ComposedStore', $schema->arrayOfComposedStore->storeClasses[0]);
+        $this->assertEquals('array', $schema['arrayOfComposedStore']['type']);
+        $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\ComposedStore', $schema['arrayOfComposedStore']['storeClasses'][0]);
 
         //Test array helper functions
         $newStore = new ComposedStore();
@@ -213,7 +213,7 @@ class StoreTest extends WebTestCase
         $store = new StoreClass\StoreAB();
 
         $this->assertNull($store->getStore());
-        $this->assertEquals(2, count($store->getJsonSchema()->definition->store->storeClasses));
+        $this->assertEquals(2, count($store->getJsonSchema()['definition']['store']['storeClasses']));
         $this->assertTrue($store->validate());
 
         /**
@@ -239,7 +239,7 @@ class StoreTest extends WebTestCase
         //Store with an array property with several store type
         $store = new StoreClass\StoreABArray();
         $this->assertTrue(is_array($store->getStore()));
-        $this->assertEquals(2, count($store->getJsonSchema()->definition->store->storeClasses));
+        $this->assertEquals(2, count($store->getJsonSchema()['definition']['store']['storeClasses']));
         $this->assertTrue($store->validate());
 
         //Try with StoreA
@@ -391,11 +391,13 @@ class StoreTest extends WebTestCase
 
     /**
      * @code
-     * phpunit -v --filter testSerializeUnserialize -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * ./bin/phpunit -v --filter testSerializeUnserialize -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
      * @endcode
      */
     public function testSerializeUnserialize()
     {
+
+        $store = new StoreClass\StoreA();
         $store = new StoreClass\StoreA(array('titleA' => 'my title'));
         $this->assertEquals('PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\StoreA', $store->get_className());
         $this->assertTrue($store->validate());
