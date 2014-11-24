@@ -2,6 +2,7 @@
 
 namespace PureMachine\Bundle\StoreBundle\Store\Base;
 
+use PureMachine\Bundle\StoreBundle\Adapter\CachedJsonSchemaInterface;
 use PureMachine\Bundle\StoreBundle\Manager\StoreManager;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -539,7 +540,7 @@ abstract class BaseStore implements JsonSerializable
          * If not in local cache, we ask to the adaptor
          */
         $adapter = StoreManager::getAdapter($class);
-        if ($adapter) {
+        if ($adapter && ($adapter instanceof CachedJsonSchemaInterface )) {
             $schema = $adapter->getJsonSchema($class);
             if ($schema) {
                 if (!array_key_exists($class, self::$jsonSchema)) {
@@ -620,7 +621,7 @@ abstract class BaseStore implements JsonSerializable
         self::$jsonSchema[$class]['configuration'] = array();
         self::$jsonSchema[$class]['configuration']['_className'] = $class;
 
-        if ($adapter) {
+        if ($adapter && $adapter instanceof CachedJsonSchemaInterface) {
             $adapter->cacheJsonSchema($class, self::$jsonSchema[$class]);
         }
 

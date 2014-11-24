@@ -12,7 +12,7 @@ class Exception extends \Exception
     const GENERIC_001 = 'GENERIC_001';
     const GENERIC_001_MESSAGE = 'Unknown error';
 
-    public function __construct($detailledMessage = "", $code = null, \Exception $previous = NULL)
+    public function __construct($detailledMessage = "", $code = null, \Exception $previous = null)
     {
         if ($code == null) $code = static::DEFAULT_ERROR_CODE;
 

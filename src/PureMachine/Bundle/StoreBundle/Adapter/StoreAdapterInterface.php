@@ -22,13 +22,4 @@ interface StoreAdapterInterface
      * To add personal annotation to storeSchema
      */
     public static function extendStoreSchema($annotation, $property, array $definition);
-
-    /**
-     * Return the schema for a class
-     * Usually used to improve cache system
-     *
-     * return null the not implemented
-     */
-    public static function getJsonSchema($className);
-    public static function cacheJsonSchema($className, $schema);
 }
