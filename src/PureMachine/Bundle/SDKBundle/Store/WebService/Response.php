@@ -48,4 +48,10 @@ class Response extends BaseStore
      * @Assert\Type("string")
      */
     protected $ticket;
+
+    /**
+     * @Store\Property(description="application version if defined")
+     * @Assert\Type("string")
+     */
+    protected $applicationVersion;
 }
