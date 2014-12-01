@@ -76,6 +76,11 @@ class Exception extends \Exception
         return $this->exceptionStore;
     }
 
+    public function setStore($e)
+    {
+        return $this->exceptionStore = $e;
+    }
+
     public function addMessage($key, $value)
     {
         $this->exceptionStore->addMessage($key, $value);
