@@ -12,7 +12,8 @@ class Exception extends \Exception
     const GENERIC_001 = 'GENERIC_001';
     const GENERIC_001_MESSAGE = 'Unknown error';
 
-    public function __construct($detailledMessage = "", $code = null, \Exception $previous = null)
+    public function __construct($detailledMessage = "", $code = null, \Exception $previous = null,
+                                ExceptionStore $exceptionStore=null)
     {
         if ($code == null) $code = static::DEFAULT_ERROR_CODE;
 
@@ -26,24 +27,29 @@ class Exception extends \Exception
 
         parent::__construct("$message. $detailledMessage", $numCode, $previous);
 
-        $this->exceptionStore = new ExceptionStore();
-        $this->exceptionStore->setMessage($message);
-        $this->exceptionStore->setDetailledMessage($detailledMessage);
-        $this->exceptionStore->setCode($code);
-        $this->exceptionStore->setExceptionClass(get_class($this));
-        $t = explode('\n', $this->getTraceAsString());
-        $this->exceptionStore->setStack($t);
+        if ($exceptionStore) {
+            $this->exceptionStore = $exceptionStore;
+        } else {
 
-        $stack = $this->getTrace();
-        if (count($stack) > 0) {
-            //Setting default unknown values
-            $this->exceptionStore->setFile("unknown");
-            $this->exceptionStore->setLine(0);
-            //Searching for a valid stackItem
-            $stackItem = static::searchForFileAndLineCalledFromStack($stack);
-            if (!is_null($stackItem)) {
-                $this->exceptionStore->setFile(basename($stackItem['file'],'.php'));
-                $this->exceptionStore->setLine($stackItem['line']);
+            $this->exceptionStore = new ExceptionStore();
+            $this->exceptionStore->setMessage($message);
+            $this->exceptionStore->setDetailledMessage($detailledMessage);
+            $this->exceptionStore->setCode($code);
+            $this->exceptionStore->setExceptionClass(get_class($this));
+            $t = explode('\n', $this->getTraceAsString());
+            $this->exceptionStore->setStack($t);
+
+            $stack = $this->getTrace();
+            if (count($stack) > 0) {
+                //Setting default unknown values
+                $this->exceptionStore->setFile("unknown");
+                $this->exceptionStore->setLine(0);
+                //Searching for a valid stackItem
+                $stackItem = static::searchForFileAndLineCalledFromStack($stack);
+                if (!is_null($stackItem)) {
+                    $this->exceptionStore->setFile(basename($stackItem['file'], '.php'));
+                    $this->exceptionStore->setLine($stackItem['line']);
+                }
             }
         }
     }

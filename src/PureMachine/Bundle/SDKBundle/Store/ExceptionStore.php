@@ -4,6 +4,16 @@ namespace PureMachine\Bundle\SDKBundle\Store;
 use Symfony\Component\Validator\Constraints as Assert;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
 
+/**
+ * Class ExceptionStore
+ * @package PureMachine\Bundle\SDKBundle\Store
+ *
+ * @method getMessage()
+ * @method getCode()
+ * @method getExceptionClass()
+ * @method getTicket()
+ * @method getDetailledMessage()
+ */
 class ExceptionStore extends Base\BaseStore
 {
     /**

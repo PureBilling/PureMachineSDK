@@ -58,7 +58,7 @@ class WebServiceException extends Exception
                 if (class_exists($class)) {
                     $ex = null;
                     try {
-                        $ex = new $class($message, $answer->getAnswer()->getCode());
+                        $ex = new $class($message, $answer->getAnswer()->getCode(), null, $answer->getAnswer());
                     } catch (\Exception $e) {}
 
                     if ($ex instanceof \Exception) {
