@@ -405,6 +405,7 @@ class WebServiceClient
         $response->setVersion($version);
         $response->setLocal(true);
         $response->setAnswer($data);
+        $response->setServerDateTime(new \DateTime('now'));
 
         if ($status == 'success') $response->response = $data;
         else $response->error = $data;

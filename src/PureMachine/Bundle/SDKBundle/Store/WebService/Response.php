@@ -54,4 +54,11 @@ class Response extends BaseStore
      * @Assert\Type("string")
      */
     protected $applicationVersion;
+
+    /**
+     * @Store\Property(description="application version if defined")
+     * @Assert\Type("datetime")
+     * @Assert\NotBlank
+     */
+    protected $serverDateTime;
 }
