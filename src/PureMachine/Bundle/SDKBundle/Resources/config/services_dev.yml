@@ -1,6 +1,0 @@
-services:
-
-    pure_machine.sdk.web_service_client:
-        class: PureMachine\Bundle\SDKBundle\Service\WebServiceClientDebug
-        calls:
-            - [setContainer, [@service_container] ]
