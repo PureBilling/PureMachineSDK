@@ -168,8 +168,17 @@ class HttpHelper
         $duration = microtime(true) - $start;
 
         if ($statusCode == 0) {
+
+            switch($curlErrorNo) {
+                case 7:
+                    $exception_code = HTTPException::HTTP_002;
+                    break;
+                default:
+                    $exception_code = HTTPException::HTTP_001;
+            }
+
             $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
-            $e = $this->createException($message);
+            $e = $this->createException($message, $exception_code);
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);
