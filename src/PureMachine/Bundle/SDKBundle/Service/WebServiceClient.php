@@ -38,10 +38,27 @@ class WebServiceClient
     protected $login = null;
     protected $password = null;
     protected $endPoint = null;
+    protected $_timeOut = HttpHelper::TIMEOUT;
+    protected $_connectionTimeout = HttpHelper::CONNECTION_TIMEOUT;
+    protected $_proxy = null;
+    protected $_proxyPort = null;
+
 
     public function __construct($endPoint = null)
     {
         $this->endPoint = $endPoint;
+    }
+
+    public function setTimeout($connectionTimeout,$timeout)
+    {
+        $this->_connectionTimeout = $connectionTimeout;
+        $this->_timeOut = $timeout;
+    }
+
+    public function setProxy($proxy, $proxyPort)
+    {
+        $this->_proxy = $proxy;
+        $this->_proxyPort = $proxyPort;
     }
 
     private function nerverUsed()
@@ -116,7 +133,9 @@ class WebServiceClient
          * the call, remote or local
          */
         if (($inputData instanceof BaseStore) && $this->isSymfony()) {
-            $event = new WebServiceCallingEvent($token, $webServiceName, $inputData, $version);
+            $event = new WebServiceCallingEvent($token, $webServiceName, $inputData, $version,
+                                                $this->_connectionTimeout, $this->_timeOut,
+                                                $this->_proxy, $this->_proxyPort);
             $eventDispatcher->dispatch("puremachine.webservice.calling", $event);
         }
 
@@ -201,6 +220,9 @@ class WebServiceClient
             $http = new HttpHelper();
         }
 
+        $http->setProxy($this->_proxy, $this->_proxyPort);
+        $http->setTimeout($this->_connectionTimeout, $this->_proxyPort);
+
         list($login, $password) = $this->getCredentials();
         $fullUrl = $http->getFullUrl($url, $inputData);
 
@@ -208,12 +230,18 @@ class WebServiceClient
             $http->setNextRequestEventMetadata(array(
                 'disableEvent' => true
             ));
+
+            $auth = null;
+            if ($login) {
+                $auth = $login . ":" . $password;
+            }
+
             $response = $http->getJsonResponse(
                     $url,
                     $inputData,
                     'POST',
                     array(),
-                    $login . ":" . $password
+                    $auth
                     );
         } catch (HTTPException $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e, $fullUrl);

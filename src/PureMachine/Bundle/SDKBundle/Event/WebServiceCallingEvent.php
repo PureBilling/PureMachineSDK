@@ -33,6 +33,26 @@ class WebServiceCallingEvent extends Event
     private $version;
 
     /**
+     * @var integer
+     */
+    private $connectionTimeout;
+
+    /**
+     * @var integer
+     */
+    private $timeout;
+
+    /**
+     * @var string
+     */
+    private $proxy;
+
+    /**
+     * @var integer
+     */
+    private $proxyPort;
+
+    /**
      * Class constructor
      *
      * @param string    $token
@@ -44,13 +64,21 @@ class WebServiceCallingEvent extends Event
             $token,
             $webServiceName,
             BaseStore $inputData,
-            $version
+            $version,
+            $connectionTimeout = null,
+            $timeout = null,
+            $proxy = null,
+            $proxyHost = null
             )
     {
         $this->token = $token;
         $this->webServiceName = $webServiceName;
         $this->inputData = $inputData;
         $this->version = $version;
+        $this->connectionTimeout = $connectionTimeout;
+        $this->timeout = $timeout;
+        $this->proxy = $proxy;
+        $this->proxyPort = $proxyHost;
     }
 
     /**
@@ -91,6 +119,46 @@ class WebServiceCallingEvent extends Event
     public function getVersion()
     {
         return $this->version;
+    }
+
+    /**
+     * Return version
+     *
+     * @return inteter
+     */
+    public function getConnectionTimeout()
+    {
+        return $this->connectionTimeout;
+    }
+
+    /**
+     * Return version
+     *
+     * @return integer
+     */
+    public function getTimeout()
+    {
+        return $this->timeout;
+    }
+
+    /**
+     * Return version
+     *
+     * @return string
+     */
+    public function getProxy()
+    {
+        return $this->proxy;
+    }
+
+    /**
+     * Return version
+     *
+     * @return string
+     */
+    public function getProxyPort()
+    {
+        return $this->proxyPort;
     }
 
 }

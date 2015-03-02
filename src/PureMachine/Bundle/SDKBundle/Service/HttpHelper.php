@@ -8,14 +8,39 @@ use PureMachine\Bundle\SDKBundle\Event\HttpRequestEvent;
 
 class HttpHelper
 {
+    const CONNECTION_TIMEOUT = 30.0;
+    const TIMEOUT = 30.0;
+
     private $log= null;
     private $symfonyContainer = null;
     private $metadata = array();
     private $lastAnswerHeaders = null;
+    private $proxy = null;
+    private $proxyPort = null;
+    private $connectionTimeout = HttpHelper::CONNECTION_TIMEOUT;
+    private $timeout = HttpHelper::TIMEOUT;
 
-    public function __construct($logActivity=false)
+    public function __construct($logActivity=false, $connectionTimeout=HttpHelper::CONNECTION_TIMEOUT,
+                                $timeout=HttpHelper::TIMEOUT, $proxy=null, $proxyPort = null)
     {
+        $this->connectionTimeout = $connectionTimeout;
+        $this->timeout = $timeout;
+        $this->proxy = $proxy;
+        $this->proxyPort = $proxyPort;
+
         if ($logActivity) $this->resetLog();
+    }
+
+    public function setTimeout($connectionTimeout, $timeout)
+    {
+        $this->connectionTimeout = $connectionTimeout;
+        $this->timeout = $timeout;
+    }
+
+    public function setProxy($proxy, $proxyPort)
+    {
+        $this->proxy = $proxy;
+        $this->proxyPort = $proxyPort;
     }
 
     public function setContainer($container)
@@ -52,6 +77,12 @@ class HttpHelper
         $debug = false;
         $this->lastAnswerHeaders = null;
         $options['trace'] = 1;
+
+        if ($this->proxy && $this->proxyPort) {
+            $options['proxy_port'] = $this->proxy;
+            $options['proxy_host'] = $this->proxyPort;
+        }
+        $options['connection_timeout'] = $this->connectionTimeout;
 
         $client = new \SoapClient($wsdl, $options);
 
@@ -147,12 +178,19 @@ class HttpHelper
             $log->addMessage("$method values", json_encode($data));
         }
 
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT , $this->connectionTimeout);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_USERAGENT, 'PureMachine HttpHelpers:getJsonAnswer');
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        if($this->proxy && $this->proxyPort) {
+          curl_setopt($ch, CURLOPT_PROXY, $this->proxy);
+          curl_setopt($ch, CURLOPT_PROXYPORT, $this->proxyPort);
+        }
 
         if ($authenticationToken) {
             curl_setopt($ch, CURLOPT_USERPWD, $authenticationToken);
