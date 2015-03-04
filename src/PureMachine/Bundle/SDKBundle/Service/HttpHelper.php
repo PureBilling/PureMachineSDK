@@ -79,8 +79,8 @@ class HttpHelper
         $options['trace'] = 1;
 
         if ($this->proxy && $this->proxyPort) {
-            $options['proxy_port'] = $this->proxy;
-            $options['proxy_host'] = $this->proxyPort;
+            $options['proxy_host'] = $this->proxy;
+            $options['proxy_port'] = $this->proxyPort;
         }
         $options['connection_timeout'] = $this->connectionTimeout;
 
