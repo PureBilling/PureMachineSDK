@@ -83,8 +83,8 @@ class HttpHelper
             $options['proxy_port'] = $this->proxyPort;
 
             $context = stream_context_create(
-                [ 'ssl' => ['SNI_enabled' => false],
-                  'http' => ['proxy' => 'tcp://' . $this->proxy . ':' . $this->proxyPort]]
+                array( 'ssl' => array('SNI_enabled' => false),
+                  'http' => array('proxy' => 'tcp://' . $this->proxy . ':' . $this->proxyPort))
                 );
             $options['stream_context'] = $context;
         }
