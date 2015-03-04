@@ -81,6 +81,12 @@ class HttpHelper
         if ($this->proxy && $this->proxyPort) {
             $options['proxy_host'] = $this->proxy;
             $options['proxy_port'] = $this->proxyPort;
+
+            $context = stream_context_create(
+                [ 'ssl' => ['SNI_enabled' => false],
+                  'http' => ['proxy' => 'tcp://' . $this->proxy . ':' . $this->proxyPort]]
+                );
+            $options['stream_context'] = $context;
         }
         $options['connection_timeout'] = $this->connectionTimeout;
 
