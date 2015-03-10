@@ -68,6 +68,12 @@ class ExceptionStore extends Base\BaseStore
     protected $detailledMessage = "";
 
     /**
+     * @Store\Property(description="internal message if any")
+     * @Assert\Type("string")
+     */
+    protected $internalMessage = "";
+
+    /**
      * @Store\Property(description="messages added to help debug")
      * @Assert\Type("array")
      */
