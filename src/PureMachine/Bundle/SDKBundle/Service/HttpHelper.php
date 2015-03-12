@@ -125,7 +125,7 @@ class HttpHelper
     public function getJsonResponse($url, $data=array(), $method='POST',
                                  $headers=array(), $authenticationToken=null)
     {
-        $output = $this->getResponse($url, $data, $method, $headers, $authenticationToken);
+        $output = $this->getResponse($url, $data, $method, $headers, $authenticationToken, true);
         $json = json_decode($output);
 
         if ($json == null) {
@@ -144,15 +144,15 @@ class HttpHelper
     }
 
     public function getResponse($url, $data=array(), $method='POST',
-                                $headers=array(), $authenticationToken=null)
+                                $headers=array(), $authenticationToken=null, $json=false)
     {
         $data2 = array('json' => json_encode($data));
 
-        return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken);
+        return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken, true);
     }
 
     public function httpRequest($url, $data=null, $method='POST',
-                                $headers=array(), $authenticationToken=null)
+                                $headers=array(), $authenticationToken=null, $json=false)
     {
         $log = $this->log;
         $ch = curl_init();
@@ -168,6 +168,13 @@ class HttpHelper
         } elseif ($method == 'POST') {
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_POST, true);
+
+            if ($json) {
+                if (is_array($data)) {
+                    $data = json_encode($data);
+                }
+                $headers[] = 'Content-Type: application/json';
+            }
 
             if (is_array($data)) {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
