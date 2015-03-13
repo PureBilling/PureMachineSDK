@@ -11,6 +11,8 @@ class HttpHelper
     const CONNECTION_TIMEOUT = 30.0;
     const TIMEOUT = 30.0;
 
+    const SEND_HAS_JSON = false;
+
     private $log= null;
     private $symfonyContainer = null;
     private $metadata = array();
@@ -169,7 +171,7 @@ class HttpHelper
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_POST, true);
 
-            if ($json) {
+            if ($json && static::SEND_HAS_JSON) {
                 if (is_array($data)) {
                     $data = json_encode($data);
                 }
