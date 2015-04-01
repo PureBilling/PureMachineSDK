@@ -68,7 +68,7 @@ class StoreTest extends WebTestCase
         $this->assertEquals(1, count($store->getArrayOfComposedStore()));
 
         //test with a key
-        $store->addArrayOfComposedStore($newStore, 'key');
+        $store->addArrayOfComposedStore('key', $newStore);
         $this->assertEquals(2, count($store->getArrayOfComposedStore()));
         $temp = $store->getArrayOfComposedStore();
         $this->assertEquals('test add function', $temp['key']->getMyProperty());

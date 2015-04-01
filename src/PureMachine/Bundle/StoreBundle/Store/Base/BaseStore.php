@@ -387,15 +387,19 @@ abstract class BaseStore implements JsonSerializable
                         StoreException::STORE_005);
                 }
 
-                //FIXME: Change tracking does not support array addition or deletion.
                 if (in_array($property, $this->_storePropertiesCache)) {
                     $arrayToAdd = &$this->$property;
                     if (count($arguments) == 1) {
                         $arrayToAdd[] = $arguments[0];
                     } elseif (count($arguments) == 2) {
-                        $arrayToAdd[$arguments[1]] = $arguments[0];
+
+                        if (!is_string($arguments[0])) {
+                            throw new StoreException("key type is: " . gettype($arguments[0]), StoreException::STORE_007);
+                        }
+
+                        $arrayToAdd[$arguments[0]] = $arguments[1];
                     } else {
-                        throw new StoreException("$method(\$value, \$key=null) take 1 or two arguments.",
+                        throw new StoreException("$method take two arguments :(\$key, \$value), or one: (\$value) ",
                             StoreException::STORE_005);
                     }
                 }

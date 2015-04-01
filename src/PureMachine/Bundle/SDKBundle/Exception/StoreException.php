@@ -22,4 +22,7 @@ class StoreException extends Exception
 
     const STORE_006 = 'STORE_006';
     const STORE_006_MESSAGE = 'store not found';
+
+    const STORE_007 = 'STORE_007';
+    const STORE_007_MESSAGE = 'key is not a string';
 }

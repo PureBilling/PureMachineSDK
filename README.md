@@ -1,4 +1,17 @@
-PureMachine SDK
-===============
+# PureMachine SDK
 
 Set of tools to use PureMachine and PureBilling webServices, and some http helpers.
+
+
+## ChangeLog
+
+### master
+
+- Adding Timeout support
+- Fixed array management with add[Property] method
+- Fixed SOAP helpers when using proxy
+- Adding STORE_007 exception: key is not a string
+
+### 2.0.0
+
+- Initial Release
