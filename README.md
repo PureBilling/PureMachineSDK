@@ -7,6 +7,10 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 ### master
 
+- ...
+
+### 2.0.1
+
 - Adding Timeout support
 - Fixed array management with add[Property] method
 - Fixed SOAP helpers when using proxy
