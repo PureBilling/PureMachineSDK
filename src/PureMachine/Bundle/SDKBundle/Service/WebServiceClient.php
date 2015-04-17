@@ -399,6 +399,12 @@ class WebServiceClient
             $data = Exception::buildExceptionStore(($exception));
         }
 
+        //Translate the exception if possible
+        if($this->isSymfony() && $this->symfonyContainer) {
+            $translatedMessage = $this->translateException($exception);
+            if(!is_null($translatedMessage)) $data->setMessage($translatedMessage);
+        }
+
         if ($serialize) $data = $data->serialize();
 
         /**
@@ -411,6 +417,29 @@ class WebServiceClient
         }
 
         return $this->buildResponse($webServiceName, $version, $data, $fullUrl, 'error');
+    }
+
+    protected function getSymfonyTranslator()
+    {
+        return $this->symfonyContainer->get("translator");
+    }
+
+    /**
+     * Uses the exception code to try to found a translation for the exception, if found
+     * will override the message on the exception, if not found will leave the message as it it
+     *
+     * @param \Exception $e
+     * @return void
+     */
+    protected function translateException(\Exception $e)
+    {
+        if(!$this->isSymfony() || !$this->symfonyContainer) return null;
+        $translator = $this->getSymfonyTranslator();
+
+        $translatedMessage = $translator->trans($e->getCode());
+        if($translatedMessage!=$e->getCode()) return $translatedMessage;
+
+        return null;
     }
 
     protected function buildResponse($webServiceName, $version, $data, $fullUrl=null, $status='success')
