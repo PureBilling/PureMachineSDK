@@ -401,7 +401,7 @@ class WebServiceClient
 
         //Translate the exception if possible
         if($this->isSymfony() && $this->symfonyContainer) {
-            $translatedMessage = $this->translateException($exception);
+            $translatedMessage = $this->translateException($data);
             if(!is_null($translatedMessage)) $data->setMessage($translatedMessage);
         }
 
@@ -431,13 +431,13 @@ class WebServiceClient
      * @param \Exception $e
      * @return void
      */
-    protected function translateException(\Exception $e)
+    protected function translateException($store)
     {
         if(!$this->isSymfony() || !$this->symfonyContainer) return null;
         $translator = $this->getSymfonyTranslator();
 
-        $translatedMessage = $translator->trans($e->getCode());
-        if($translatedMessage!=$e->getCode()) return $translatedMessage;
+        $translatedMessage = $translator->trans($store->getCode(), array(), 'messages', $translator->getLocale());
+        if($translatedMessage!=$store->getCode()) return $translatedMessage;
 
         return null;
     }
