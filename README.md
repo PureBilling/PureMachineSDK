@@ -9,6 +9,11 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 - ...
 
+### 2.0.2
+
+- Allow to translate error messages
+- Add laravel loader
+
 ### 2.0.1
 
 - Adding Timeout support
