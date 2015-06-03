@@ -101,7 +101,7 @@ class HttpHelper
         }
 
         try {
-            $json = $client->__soapCall($function, $data);
+            $json = $client->$function($data);
         } catch (\Exception $e) {
             $duration = microtime(true) - $start;
             $this->triggerHttpRequestEvent($data, $e->getMessage(), $wsdl, 'SOAP', 500, $duration);
