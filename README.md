@@ -9,6 +9,10 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 - ...
 
+### 2.0.4
+
+- Allow classic and low level soap calls
+
 ### 2.0.3
 
 - Fix SOAP http helper
