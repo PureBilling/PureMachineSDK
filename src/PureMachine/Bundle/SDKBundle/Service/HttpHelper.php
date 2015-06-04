@@ -72,7 +72,7 @@ class HttpHelper
         $this->metadata = $metadata;
     }
 
-    public function getSoapResponse($wsdl, $function, $data, $cookie=null)
+    public function getSoapResponse($wsdl, $function, $data, $cookie=null, $directCall=true)
     {
         $options = array();
         $start = microtime(true);
@@ -99,9 +99,13 @@ class HttpHelper
                 $client->__setCookie($key, $value);
             }
         }
-
         try {
-            $json = $client->$function($data);
+            if ($directCall) {
+                $json = $client->__soapCall($function, $data);
+            } else {
+                $json = $client->$function($data);
+            }
+
         } catch (\Exception $e) {
             $duration = microtime(true) - $start;
             $this->triggerHttpRequestEvent($data, $e->getMessage(), $wsdl, 'SOAP', 500, $duration);
