@@ -8,8 +8,8 @@ use PureMachine\Bundle\SDKBundle\Event\HttpRequestEvent;
 
 class HttpHelper
 {
-    const CONNECTION_TIMEOUT = 30.0;
-    const TIMEOUT = 30.0;
+    const CONNECTION_TIMEOUT = 25.0;
+    const TIMEOUT = 25.0;
 
     const SEND_HAS_JSON = false;
 
@@ -229,12 +229,18 @@ class HttpHelper
             switch($curlErrorNo) {
                 case 7:
                     $exception_code = HTTPException::HTTP_002;
+                    $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
+                    break;
+                case 28:
+                    $exception_code = HTTPException::HTTP_003;
+                    $message = "Operation timeout: $statusCode ($curlErrorNo:$curlError)";
                     break;
                 default:
                     $exception_code = HTTPException::HTTP_001;
+                    $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
             }
 
-            $message = "CURL error: $statusCode ($curlErrorNo:$curlError)";
+
             $e = $this->createException($message, $exception_code);
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
@@ -258,6 +264,16 @@ class HttpHelper
             $e = $this->createException("HTTP exception: error " . $statusCode ." for ". $url
                                   ." . Invalid credentials.",
                                    HTTPException::HTTP_401);
+            $e->addMessage('output', $output);
+            $e->addMessage('called URL', $url);
+            $e->addMessage('data sent:', $data);
+            $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
+            throw $e;
+        }
+
+        if ($this->proxy && $statusCode == 100) {
+            $errorMessage = "HTTP Timeout (100)for " . $url;
+            $e = $this->createException($errorMessage, HTTPException::HTTP_100);
             $e->addMessage('output', $output);
             $e->addMessage('called URL', $url);
             $e->addMessage('data sent:', $data);

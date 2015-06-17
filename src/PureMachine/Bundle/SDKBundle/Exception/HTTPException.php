@@ -11,6 +11,12 @@ class HTTPException extends Exception
     const HTTP_002 = 'HTTP_002';
     const HTTP_002_MESSAGE = 'Connexion refused';
 
+    const HTTP_003 = 'HTTP_003';
+    const HTTP_003_MESSAGE = 'timeout';
+
+    const HTTP_100 = 'HTTP_100';
+    const HTTP_100_MESSAGE = 'timeout (proxy)';
+
     const HTTP_401 = 'HTTP_401';
     const HTTP_401_MESSAGE = '401: Invalid credentials';
 
