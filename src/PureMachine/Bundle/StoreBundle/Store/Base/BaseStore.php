@@ -166,9 +166,10 @@ abstract class BaseStore implements JsonSerializable
         if (!$this->isValidated())
             throw new StoreException("You must call validate() method before.",
                 StoreException::STORE_002);
-        if (count($this->violations) > 0)
+        if (count($this->violations) > 0) {
             throw new StoreException('Store validation error :' . $this->violations[0],
                 StoreException::STORE_002);
+        }
     }
 
     /**
@@ -301,6 +302,16 @@ abstract class BaseStore implements JsonSerializable
                 $value = (object) $value;
                 $data[$property] = $value;
             }
+
+            /**
+             * if we receive a array, but it's defined as object, we convert it
+             * If not, the cast to Store is not done
+             */
+            if ($definition['type'] == 'array' && is_object($value)) {
+                $value = (array) $value;
+                $data[$property] = $value;
+            }
+
 
             /**
              * unSerialize Value

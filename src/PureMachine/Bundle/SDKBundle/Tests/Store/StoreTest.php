@@ -412,4 +412,23 @@ class StoreTest extends WebTestCase
         $this->assertTrue($store->validate());
         $this->assertEquals('my title', $store->getTitleA());
     }
+
+    /**
+     * @code
+     * ./bin/phpunit -v --filter testArrayHelpers -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testArrayHelpers()
+    {
+
+        $store = new StoreClass\TestArrayHelperStore();
+        $store->addMeta('A', 'B');
+        $this->assertTrue($store->validate());
+
+        $data = json_decode(json_encode($store->serialize()));
+
+        $store2 = new StoreClass\TestArrayHelperStore($data);
+        $this->assertTrue($store2->validate());
+
+    }
 }

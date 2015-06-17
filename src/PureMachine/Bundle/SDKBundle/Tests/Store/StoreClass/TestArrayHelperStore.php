@@ -1,0 +1,17 @@
+<?php
+
+namespace PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass;
+
+use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
+use Symfony\Component\Validator\Constraints as Assert;
+use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
+
+class TestArrayHelperStore extends BaseStore
+{
+    /**
+     * @Store\Property(description="simpleArray")
+     * @Assert\Type("array")
+     */
+    protected $meta;
+
+}
