@@ -5,9 +5,11 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 ## ChangeLog
 
-### master
+### 2.0.5
 
-- ...
+- Fix timeout issues
+- Fixing store creation with array as stdclass
+
 
 ### 2.0.4
 
