@@ -5,7 +5,7 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 ## ChangeLog
 
-### master
+### 2.0.6
 
 - Increase default timeout to 65 seconds
 
