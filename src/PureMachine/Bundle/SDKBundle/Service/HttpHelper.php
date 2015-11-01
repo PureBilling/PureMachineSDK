@@ -8,8 +8,8 @@ use PureMachine\Bundle\SDKBundle\Event\HttpRequestEvent;
 
 class HttpHelper
 {
-    const CONNECTION_TIMEOUT = 25.0;
-    const TIMEOUT = 25.0;
+    const CONNECTION_TIMEOUT = 65.0;
+    const TIMEOUT = 65.0;
 
     const SEND_HAS_JSON = false;
 
