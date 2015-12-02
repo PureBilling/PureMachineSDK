@@ -28,7 +28,7 @@ class WebServiceException extends Exception
     const WS_006 = 'WS_006';
     const WS_006_MESSAGE = 'webservice annotation error';
 
-    public static function raiseIfError(Response $answer, $displayStack=false)
+    public static function raiseIfError($answer, $displayStack=false)
     {
         if ($answer->getStatus() != 'success') {
 
@@ -45,6 +45,32 @@ class WebServiceException extends Exception
                     foreach($stack as $line) print "$line\n";
                 }
 
+            } elseif($answer->isStoreProperty('metadata')) {
+
+                $message  = $answer->getAnswer()->getMessage() . "\n";
+                $message .= "detailed: " . $answer->getAnswer()->getDetailedMessage() . "\n";
+
+                $metadata = $answer->getMetadata();
+
+                if (isset($metadata->internalMessage)) {
+                    $message .= "internal: " . $metadata->internalMessage . "\n";
+                }
+
+                if ($answer->isStoreProperty('metadata')) {
+                    if ($displayStack && $answer->isStoreProperty('metadata')) {
+
+                        if (isset($metadata->line) && isset($metadata->file)) {
+                            print "at " . $metadata->file . ":" . $metadata->line . "\n\n";
+                        }
+
+
+                        if (isset($metadata->stack) && is_array($metadata->stack)) {
+                            foreach ($metadata->stack as $line) {
+                                print $line . "\n";
+                            }
+                        }
+                    }
+                }
             } else {
                 $message = $answer->getAnswer()->getMessage();
             }
@@ -71,7 +97,7 @@ class WebServiceException extends Exception
                 }
             }
 
-            $e = new WebServiceException($message, $answer->getAnswer()->getCode());
+            $e = new WebServiceException($message);
             $e->getStore()->setMessage($answer->getAnswer()->getMessage());
             $e->getStore()->setCode($answer->getAnswer()->getCode());
             throw $e;

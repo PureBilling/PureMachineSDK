@@ -91,6 +91,11 @@ class Exception extends \Exception
         return $this->exceptionStore->getCode();
     }
 
+    public function setMerchantDetails($merchantMessage)
+    {
+        $this->addMetadata('merchantDetail', $merchantMessage);
+    }
+
     public function addMetadata($key, $value)
     {
         $this->exceptionStore->addMetadata($key, $value);

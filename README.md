@@ -5,6 +5,11 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 ## ChangeLog
 
+### master
+
+- allow to remove null properties from serialization
+- allow date serialization using ISO 8601 
+
 ### 2.0.6
 
 - Increase default timeout to 65 seconds

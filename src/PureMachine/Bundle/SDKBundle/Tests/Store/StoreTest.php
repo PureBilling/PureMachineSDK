@@ -12,7 +12,7 @@ use PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\PrivateStore;
 
 /**
  * @code
- * phpunit -v -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+ * ./bin/phpunit -v -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
  * @endcode
  */
 class StoreTest extends WebTestCase
@@ -20,7 +20,7 @@ class StoreTest extends WebTestCase
 
     /**
      * @code
-     * phpunit -v --filter testAutoSetterGetter -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * ./bin/phpunit -v --filter testAutoSetterGetter -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
      * @endcode
      */
     public function testAutoSetterGetter()
@@ -51,7 +51,7 @@ class StoreTest extends WebTestCase
         $schema = $store->getJsonSchema()['definition'];
 
         $this->assertEquals(7, count((array) $schema));
-        $this->assertEquals(9, count((array) $schema['testProperty']));
+        $this->assertEquals(10, count((array) $schema['testProperty']));
         $this->assertEquals('string', $schema['testProperty']['type']);
         $this->assertEquals('testProperty', $schema['testProperty']['description']);
 
@@ -304,6 +304,25 @@ class StoreTest extends WebTestCase
         $this->assertTrue(is_int($serializedStore->value));
         $this->assertEquals($dt->getTimestamp(), $serializedStore->value);
 
+        //Serialize as ISO8601
+        $serializedStore = $sampleStore->serialize(false, true, true, true);
+        $this->assertEquals('2014-07-31T22:00:00+00:00', $serializedStore->value);
+
+        //ISO8601 from constructor
+        $sampleStore2 = new StoreDateTime($serializedStore);
+        $dtOut = $sampleStore2->getValue();
+        $dtOut->setTimezone(new \DateTimeZone('Europe/Madrid'));
+        $getDt = $dtOut->format('Y-m-d H:i:s');
+        $this->assertEquals('2014-08-01 00:00:00', $getDt);
+
+        //ISO8601 to set method
+        $sampleStore3 = new StoreDateTime();
+        $sampleStore3->setValue('2014-07-31T22:00:00+00:00');
+        $dtOut = $sampleStore3->getValue();
+        $dtOut->setTimezone(new \DateTimeZone('Europe/Madrid'));
+        $getDt = $dtOut->format('Y-m-d H:i:s');
+        $this->assertEquals('2014-08-01 00:00:00', $getDt);
+
         //Getting the datetime should return a DateTime object
         $fetchedValue = $sampleStore->getValue();
         $this->assertTrue($fetchedValue instanceof \DateTime);
@@ -430,5 +449,39 @@ class StoreTest extends WebTestCase
         $store2 = new StoreClass\TestArrayHelperStore($data);
         $this->assertTrue($store2->validate());
 
+    }
+
+    /**
+     * @code
+     * ./bin/phpunit -v --filter testRemoveNullProperties -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testRemoveNullProperties()
+    {
+        $store = new StoreClass\StoreD();
+        $store->setTitleD('D');
+        $this->assertTrue($store->validate());
+
+        $data = (array)$store->serialize();
+        $this->assertTrue(array_key_exists('nullableTitle', $data));
+        $this->assertTrue(array_key_exists('nullableTitle2', $data));
+        $this->assertNull($data['nullableTitle2']);
+        $this->assertEquals('D', $data['titleD']);
+
+        $data = (array)$store->serialize(false, true, true);
+        $this->assertFalse(array_key_exists('nullableTitle', $data));
+        $this->assertTrue(array_key_exists('nullableTitle2', $data));
+        $this->assertNull($data['nullableTitle2']);
+        $this->assertEquals('D', $data['titleD']);
+
+        $store->setNullableTitle("NT");
+
+        $data = (array)$store->serialize();
+        $this->assertEquals('NT', $data['nullableTitle']);
+        $this->assertEquals('D', $data['titleD']);
+
+        $data = (array)$store->serialize(false, true, true);
+        $this->assertEquals('NT', $data['nullableTitle']);
+        $this->assertEquals('D', $data['titleD']);
     }
 }

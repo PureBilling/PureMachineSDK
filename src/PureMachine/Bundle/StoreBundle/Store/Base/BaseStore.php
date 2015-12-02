@@ -17,7 +17,7 @@ abstract class BaseStore implements JsonSerializable
     private static $jsonSchema = array();
     private $_adapter = null;
     private $_storePropertiesCache = array();
-    private $_jsonSchema = array();
+    protected $_jsonSchema = array();
 
     /**
      * Array of ConstraintViolation instances
@@ -40,6 +40,7 @@ abstract class BaseStore implements JsonSerializable
      * @Assert\NotBlank
      */
     protected $_className;
+
 
     public function set_className($class) {}
 
@@ -174,8 +175,11 @@ abstract class BaseStore implements JsonSerializable
 
     /**
      * Serilize the Store
+     *
+     * if removeNullValues is True, non mandatory null values are removed from serialized store
      */
-    public function serialize($includePrivate=false, $includeInternal=true)
+    public function serialize($includePrivate=false, $includeInternal=true, $removeNullValues=false,
+                              $dateAsISO8601=false)
     {
         $answer = array();
         $schema = $this->_jsonSchema;
@@ -197,11 +201,25 @@ abstract class BaseStore implements JsonSerializable
             if (isset($definition['type'])) {
                 switch ($definition['type']) {
                     case "datetime":
-                        $valueFromMethod = $this->$property; //Integer value
+                        if ($dateAsISO8601) {
+                            $valueFromMethod = $valueFromMethod->format("c");
+                        } else {
+                            $valueFromMethod = $this->$property; //Integer value
+                        }
                         break;
                 }
             }
             $value = StoreHelper::serialize($valueFromMethod, $includePrivate, $includeInternal);
+
+            if (is_null($value)
+                && $removeNullValues
+                && array_key_exists('validationConstraints', $definition)
+                && !$definition['keepIfNull']
+                && !(in_array('NotBlank', $definition['validationConstraints']))) {
+
+                continue;
+            }
+
             $answer[$property] = $value;
 
             /**
@@ -495,6 +513,22 @@ abstract class BaseStore implements JsonSerializable
 
                         return $this;
                     }
+                    elseif (is_string($value)) {
+
+                        try {
+                            $dt = new \DateTime($value);
+                         } catch (\Exception $e) {
+                            throw new StoreException("$property date string format is invalid: " . $value .
+                                ". error is " . $e->getMessage(),
+                                StoreException::STORE_005);
+                        }
+
+                        ;
+                        $this->$property = $dt->format("U");
+
+                        return $this;
+                    }
+
                     if (!$value instanceof \DateTime) {
                         throw new StoreException("$property only accepts DateTime as input date , got " . gettype($value),
                             StoreException::STORE_005);
@@ -583,6 +617,7 @@ abstract class BaseStore implements JsonSerializable
             foreach ($annotations as $annotation) {
                 if ($annotation instanceof Store\Property) {
                     $definition[$property]['description'] = $annotation->description;
+                    $definition[$property]['keepIfNull'] = $annotation->keepIfNull;
                     $definition[$property]['private'] = $annotation->private;
 
                     if (substr($property,0,1) == "_") {

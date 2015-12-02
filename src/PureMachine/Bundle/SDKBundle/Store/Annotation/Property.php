@@ -13,4 +13,10 @@ class Property extends Annotation
     public $private = false;
     public $recommended = false;
     public $alias = null;
+
+    /**
+     * Property is not removed as serialization if null
+     * @var bool
+     */
+    public $keepIfNull = false;
 }

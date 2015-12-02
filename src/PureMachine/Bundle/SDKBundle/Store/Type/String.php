@@ -1,9 +1,9 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Store\Type;
 
+use PureMachine\Bundle\SDKBundle\Store\Base\SimpleType;
 use Symfony\Component\Validator\Constraints as Assert;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
-use PureMachine\Bundle\SDKBundle\Store\Base\SimpleType;
 
 class String extends SimpleType
 {
