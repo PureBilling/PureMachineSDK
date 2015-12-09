@@ -26,10 +26,11 @@ class StoreHelper
      * @param  bool     $includeInternal
      * @return stdClass
      */
-    public static function serialize($inValue, $includePrivate=false, $includeInternal=true)
+    public static function serialize($inValue, $includePrivate=false, $includeInternal=true,
+                                     $removeNullValues=false, $dateAsISO8601=false)
     {
         if ($inValue instanceof BaseStore) {
-            return $inValue->serialize($includePrivate, $includeInternal);
+            return $inValue->serialize($includePrivate, $includeInternal, $removeNullValues, $dateAsISO8601);
         }
 
         if (is_array($inValue)) {

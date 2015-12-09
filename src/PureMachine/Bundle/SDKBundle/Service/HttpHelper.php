@@ -154,7 +154,7 @@ class HttpHelper
     {
         $data2 = array('json' => json_encode($data));
 
-        return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken, true);
+        return $this->httpRequest($url, $data2, $method, $headers, $authenticationToken, true, $json);
     }
 
     public function httpRequest($url, $data=null, $method='POST',

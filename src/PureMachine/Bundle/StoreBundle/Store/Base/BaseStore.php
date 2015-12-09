@@ -209,7 +209,7 @@ abstract class BaseStore implements JsonSerializable
                         break;
                 }
             }
-            $value = StoreHelper::serialize($valueFromMethod, $includePrivate, $includeInternal);
+            $value = StoreHelper::serialize($valueFromMethod, $includePrivate, $includeInternal, $removeNullValues, $dateAsISO8601);
 
             if (is_null($value)
                 && $removeNullValues

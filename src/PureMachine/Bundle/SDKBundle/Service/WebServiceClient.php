@@ -321,6 +321,37 @@ class WebServiceClient
         return $this->validator;
     }
 
+    protected function _getAllowedClassNameString($allowedClassNames)
+    {
+        if (count($allowedClassNames) == 1) {
+            return $this->_shortenStoreClassName($allowedClassNames[0]);
+        }
+
+        $str = "[ ";
+        foreach($allowedClassNames as $allowedClassName) {
+            $str .= $this->_shortenStoreClassName($allowedClassName) . " ";
+        }
+
+        $str .= "]";
+
+        return $str;
+    }
+
+    protected function _shortenStoreClassName($storeClassName)
+    {
+        if (strstr($storeClassName, 'V3')) {
+            $parts = explode('V3', $storeClassName);
+            return str_replace('\\', '/', 'V3' . $parts[1]);
+        }
+
+        if (strstr($storeClassName, 'V1')) {
+            $parts = explode('V1', $storeClassName);
+            return str_replace('\\', '/', 'V1' . $parts[1]);
+        }
+
+        return $storeClassName;
+    }
+
     /**
      * Check json schema type validity using symfony2 Validation system
      * return the error message if any or false
@@ -336,7 +367,8 @@ class WebServiceClient
                                          .", but it's a " . gettype($value), $errorCode);
 
         if (!$value && count($allowedClassNames) >0) {
-            throw new WebServiceException("Should a instance of " . json_encode($allowedClassNames)
+            throw new WebServiceException("Should a instance of "
+                                         . $this->_getAllowedClassNameString($allowedClassNames)
                                          .", but it's null ", $errorCode);
         }
 
@@ -355,7 +387,7 @@ class WebServiceClient
             if(count($allowedClassNames) >0 &&
                !in_array(get_class($value), $allowedClassNames)) {
                 throw new WebServiceException("your store should be a intance of "
-                                             . json_encode($allowedClassNames)
+                                             . $this->_getAllowedClassNameString($allowedClassNames)
                                              .", but it's a " . get_class($value),
                                              $errorCode);
             }
@@ -367,7 +399,7 @@ class WebServiceClient
                 $message = "Store validation: "
                           .$violations[0]->getMessage() ." for property '"
                           .$property ."' in "
-                          .get_class($value);
+                          .$this->_shortenStoreClassName(get_class($value));
 
                 $propertyAssesor = "get" . ucfirst($property);
 
@@ -379,6 +411,7 @@ class WebServiceClient
                 if (is_scalar($propValue)) {
                     $message .= "='$propValue'";
                 }
+
                 throw new WebServiceException($message, $errorCode);
             }
         //We have an array of object, and potentiallt stores
