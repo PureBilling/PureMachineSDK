@@ -120,8 +120,12 @@ class WebServiceClient
      * doing any HTTP call
      */
     public function call($webServiceName, $inputData=null,
-                              $version='V1')
+                              $version=null)
     {
+        if (is_null($version)) {
+            $version = $this->getVersion();
+        }
+
         //Create unique token to identify the call
         $token = uniqid("CALL_");
         if ($this->isSymfony()) {
@@ -539,6 +543,23 @@ class WebServiceClient
         //Using static PureBilling as fallback
         if (class_exists('\PureBilling') && \PureBilling::getPrivateKey()) {
             return array('api', \PureBilling::getPrivateKey());
+        }
+    }
+
+    /**
+     * Should be used only for local resolution
+     * in remote, use the Symfony firewall.
+     */
+    public function getVersion()
+    {
+        //Try to find the password inside symfony configuration
+        if ($this->isSymfony() && $this->symfonyContainer->hasParameter('pb_version')) {
+            $this->symfonyContainer->getParameter('pb_version');
+        }
+
+        //Using static PureBilling as fallback
+        if (class_exists('\PureBilling')) {
+            return\PureBilling::getVersion();
         }
     }
 }
