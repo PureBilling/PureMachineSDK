@@ -62,7 +62,7 @@ class ExceptionStore extends Base\BaseStore
     protected $ticket;
 
     /**
-     * @Store\Property(description="detailled message if any")
+     * @Store\Property(description="detailed message if any")
      * @Assert\Type("string")
      */
     protected $detailledMessage = "";

@@ -484,4 +484,18 @@ class StoreTest extends WebTestCase
         $this->assertEquals('NT', $data['nullableTitle']);
         $this->assertEquals('D', $data['titleD']);
     }
+
+    /**
+     * @code
+     * ./bin/phpunit -v --filter testErrorMessage -c app vendor/puremachine/sdk/src/PureMachine/Bundle/SDKBundle/Tests/Store/StoreTest.php
+     * @endcode
+     */
+    public function testErrorMessage()
+    {
+        $store = new StoreClass\StoreD();
+        $this->assertFalse($store->validate());
+
+        $error = $store->getFirstErrorString();
+        $this->assertEquals("'titleD' validation error: This value should not be blank. value is null in 'PureMachine\\Bundle\\SDKBundle\\Tests\\Store\\StoreClass\\StoreD'", $error);
+    }
 }

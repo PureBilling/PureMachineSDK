@@ -12,11 +12,10 @@ class Exception extends \Exception
     const GENERIC_001 = 'GENERIC_001';
     const GENERIC_001_MESSAGE = 'Unknown error';
 
-    public function __construct($detailledMessage = "", $code = null, \Exception $previous = null,
+    public function __construct($detailedMessage = "", $code = null, \Exception $previous = null,
                                 ExceptionStore $exceptionStore=null)
     {
         if ($code == null) $code = static::DEFAULT_ERROR_CODE;
-
         $message_code = 'static::' . $code . "_MESSAGE";
 
         if (defined($message_code)) $message = constant($message_code);
@@ -25,7 +24,15 @@ class Exception extends \Exception
         if (is_numeric($code)) $numCode = $code;
         else $numCode = 0;
 
-        parent::__construct("$message. $detailledMessage", $numCode, $previous);
+        parent::__construct($detailedMessage, $numCode, $previous);
+        $this->setup($code, $message, null, $detailedMessage, $exceptionStore);
+    }
+
+    protected function setup($code, $message, $merchantMessage, $debugMessage,
+                             ExceptionStore $exceptionStore=null)
+    {
+
+
 
         if ($exceptionStore) {
             $this->exceptionStore = $exceptionStore;
@@ -33,7 +40,7 @@ class Exception extends \Exception
 
             $this->exceptionStore = new ExceptionStore();
             $this->exceptionStore->setMessage($message);
-            $this->exceptionStore->setDetailledMessage($detailledMessage);
+            $this->exceptionStore->setDetailledMessage($debugMessage);
             $this->exceptionStore->setCode($code);
             $this->exceptionStore->setExceptionClass(get_class($this));
             $t = explode('\n', $this->getTraceAsString());
@@ -52,6 +59,8 @@ class Exception extends \Exception
                 }
             }
         }
+
+        $this->setMerchantDetails($merchantMessage);
     }
 
     /**
@@ -94,6 +103,15 @@ class Exception extends \Exception
     public function setMerchantDetails($merchantMessage)
     {
         $this->addMetadata('merchantDetail', $merchantMessage);
+    }
+
+    public function getMerchantDetails()
+    {
+        $meta = $this->exceptionStore->getMetadata();
+        if (array_key_exists('merchantDetail', $meta)) {
+            return $meta['merchantDetail'];
+        }
+        return null;
     }
 
     public function addMetadata($key, $value)

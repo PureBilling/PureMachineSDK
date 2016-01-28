@@ -680,7 +680,9 @@ abstract class BaseStore implements JsonSerializable
 
     protected static function getClassName($class)
     {
-        if (is_object($class)) $class = get_class($class);
+        if (is_object($class)) {
+            $class = get_class($class);
+        }
 
         $class = explode('\\', $class);
 
@@ -697,6 +699,47 @@ abstract class BaseStore implements JsonSerializable
             (is_null($path)) ? "" : $path,
             null
         );
+    }
+
+    public function getFirstErrorString()
+    {
+        if (count($this->violations) == 0) {
+            return null;
+        }
+
+        $violation = $this->violations[0];
+        $object = $this->_shortenStoreClassName(get_class($this));
+        $property = $violation->getPropertyPath();
+        $message = $violation->getMessage();
+        $value = $violation->getInvalidValue();
+        $valueType = gettype($violation->getInvalidValue());
+
+
+        if (is_null($value)) {
+            $valueString = "value is null";
+        } else {
+            $valueString = "value(type:$valueType)";
+            if (is_scalar($value)) {
+                $valueString .= "=" . $value;
+            }
+        }
+
+        return "'$property' validation error: $message $valueString in '$object'";
+    }
+
+    protected function _shortenStoreClassName($storeClassName)
+    {
+        if (strstr($storeClassName, 'V3')) {
+            $parts = explode('V3', $storeClassName);
+            return str_replace('\\', '/', 'V3' . $parts[1]);
+        }
+
+        if (strstr($storeClassName, 'V1')) {
+            $parts = explode('V1', $storeClassName);
+            return str_replace('\\', '/', 'V1' . $parts[1]);
+        }
+
+        return $storeClassName;
     }
 
     /**

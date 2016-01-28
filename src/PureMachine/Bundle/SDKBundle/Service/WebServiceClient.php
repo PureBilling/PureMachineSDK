@@ -400,22 +400,7 @@ class WebServiceClient
             if (!$value->validate($this->getValidator())) {
                 $violations = $value->getViolations();
                 $property = $violations[0]->getPropertyPath();
-                $message = "Store validation: "
-                          .$violations[0]->getMessage() ." for property '"
-                          .$property ."' in "
-                          .$this->_shortenStoreClassName(get_class($value));
-
-                $propertyAssesor = "get" . ucfirst($property);
-
-                if (property_exists($value, $property)) {
-                    $propValue = $value->$propertyAssesor();
-                } else $propValue = '?';
-
-                $message .= ". value(type:" .gettype($propValue). ")";
-                if (is_scalar($propValue)) {
-                    $message .= "='$propValue'";
-                }
-
+                $message = $value->getFirstErrorString();
                 throw new WebServiceException($message, $errorCode);
             }
         //We have an array of object, and potentiallt stores
