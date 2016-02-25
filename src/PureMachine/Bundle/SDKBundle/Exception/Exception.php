@@ -31,9 +31,6 @@ class Exception extends \Exception
     protected function setup($code, $message, $merchantMessage, $debugMessage,
                              ExceptionStore $exceptionStore=null)
     {
-
-
-
         if ($exceptionStore) {
             $this->exceptionStore = $exceptionStore;
         } else {

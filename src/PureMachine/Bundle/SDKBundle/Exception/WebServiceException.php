@@ -32,9 +32,11 @@ class WebServiceException extends Exception
     {
         if ($answer->getStatus() != 'success') {
 
+
+
             if ($answer instanceof ErrorResponse) {
 
-                $message = $answer->getAnswer()->getMessage() ." \n";
+                $message = $answer->getAnswer()->getCode() .": ". $answer->getAnswer()->getMessage() ." \n";
 
                 if ($answer->getAnswer()->isStoreProperty('detailledMessage')) {
                     $message .= $answer->getAnswer()->getDetailledMessage();
