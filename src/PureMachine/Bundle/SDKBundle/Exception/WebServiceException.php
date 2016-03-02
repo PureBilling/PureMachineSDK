@@ -32,8 +32,6 @@ class WebServiceException extends Exception
     {
         if ($answer->getStatus() != 'success') {
 
-
-
             if ($answer instanceof ErrorResponse) {
 
                 $message = $answer->getAnswer()->getCode() .": ". $answer->getAnswer()->getMessage() ." \n";
@@ -41,6 +39,13 @@ class WebServiceException extends Exception
                 if ($answer->getAnswer()->isStoreProperty('detailledMessage')) {
                     $message .= $answer->getAnswer()->getDetailledMessage();
                 }
+
+                $metadata = $answer->getAnswer()->getMetadata();
+
+                if (array_key_exists('merchantDetail', $metadata)) {
+                    $message .= "\nmerchantDetail: " . $metadata['merchantDetail'] . "\n";
+                }
+
 
                 if ($displayStack && ($answer instanceof DebugErrorResponse)) {
                     $stack = $answer->getAnswer()->getStack();
@@ -56,6 +61,10 @@ class WebServiceException extends Exception
 
                 if (isset($metadata->internalMessage)) {
                     $message .= "internal: " . $metadata->internalMessage . "\n";
+                }
+
+                if (isset($metadata->merchantDetail)) {
+                    $message .= "merchantDetail: " . $metadata->merchantDetail . "\n";
                 }
 
                 if ($answer->isStoreProperty('metadata')) {
