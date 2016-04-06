@@ -518,9 +518,11 @@ abstract class BaseStore implements JsonSerializable
                         try {
                             $dt = new \DateTime($value);
                          } catch (\Exception $e) {
-                            throw new StoreException("$property date string format is invalid: " . $value .
+                            $e = new StoreException("$property date string format is invalid: " . $value .
                                 ". error is " . $e->getMessage(),
                                 StoreException::STORE_005);
+                            $e->setMerchantDetails("$property date string format is invalid: " . $value);
+                            throw $e;
                         }
 
                         ;
