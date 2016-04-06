@@ -201,7 +201,7 @@ abstract class BaseStore implements JsonSerializable
             if (isset($definition['type'])) {
                 switch ($definition['type']) {
                     case "datetime":
-                        if ($dateAsISO8601) {
+                        if ($dateAsISO8601 && !is_null($valueFromMethod)) {
                             $valueFromMethod = $valueFromMethod->format("c");
                         } else {
                             $valueFromMethod = $this->$property; //Integer value
