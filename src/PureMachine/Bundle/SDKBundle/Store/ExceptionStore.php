@@ -90,6 +90,11 @@ class ExceptionStore extends Base\BaseStore
         $this->messages[$key] = $value;
     }
 
+    public function getDetailedMessage()
+    {
+        return $this->getDetailedMessage();
+    }
+
     public function getCompleteMessage()
     {
         return $this->getMessage(). ": " . $this->getDetailledMessage()
