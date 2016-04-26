@@ -92,7 +92,7 @@ class ExceptionStore extends Base\BaseStore
 
     public function getDetailedMessage()
     {
-        return $this->getDetailedMessage();
+        return $this->getDetailledMessage();
     }
 
     public function getCompleteMessage()
