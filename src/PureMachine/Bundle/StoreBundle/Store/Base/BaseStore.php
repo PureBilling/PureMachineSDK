@@ -541,7 +541,7 @@ abstract class BaseStore implements JsonSerializable
                     return $this;
                     break;
                 case 'integer':
-                    if (is_numeric($value)) {
+                    if (is_integer($value)) {
                         $this->$property = (int) $value;
                     } else {
                         $this->$property = $value;
