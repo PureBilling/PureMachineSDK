@@ -412,7 +412,7 @@ class WebServiceClient
         }
     }
 
-    protected function buildErrorResponse($webServiceName, $version, \Exception $exception,
+    public function buildErrorResponse($webServiceName, $version, \Exception $exception,
                                       $fullUrl=null, $serialize=false)
     {
         if ($exception instanceof Exception) {
@@ -464,7 +464,7 @@ class WebServiceClient
         return null;
     }
 
-    protected function buildResponse($webServiceName, $version, $data, $fullUrl=null, $status='success')
+    public function buildResponse($webServiceName, $version, $data, $fullUrl=null, $status='success')
     {
         if ($status == 'success') {
             if (is_array($data)) {
