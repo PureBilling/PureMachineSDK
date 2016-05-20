@@ -19,12 +19,6 @@ use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 use Symfony\Component\Validator\Validation;
 
-/**
- * Needed because there is an annotation Inheritance bug in PHP 5.3.3 (centOS version)
- */
-use JMS\DiExtraBundle\Annotation\Service;
-use JMS\DiExtraBundle\Annotation\Tag;
-
 class WebServiceClient
 {
 
