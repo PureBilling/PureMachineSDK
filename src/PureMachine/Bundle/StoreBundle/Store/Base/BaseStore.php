@@ -337,11 +337,10 @@ abstract class BaseStore implements JsonSerializable
             if (isset($definition['storeClasses'])) $storeClasses = $definition['storeClasses'];
             else $storeClasses = array();
 
-            $storeClass = StoreHelper::getStoreClass(null, $storeClasses);
+            $storeClass = $this->getStoreClass(null, $storeClasses);
 
             if ($value) {
-                $value = StoreHelper::unSerialize($value, $storeClasses,
-                    StoreManager::getAnnotationReader());
+                $value = $this->unSerialize($value, $storeClasses, $definition);
             } elseif ($storeClass && $definition['type'] == 'object') {
 
                 /**
@@ -359,6 +358,16 @@ abstract class BaseStore implements JsonSerializable
                 $this->_setPropertyValue($property, $value);
             }
         }
+    }
+
+    public static function unSerialize($inValue, array $defaultClassNames, $definition=null)
+    {
+        return StoreHelper::unSerialize($inValue, $defaultClassNames);
+    }
+
+    public static function getStoreClass($inValue, array $defaultClassName)
+    {
+        return StoreHelper::getStoreClass($inValue, $defaultClassName);
     }
 
     /*
