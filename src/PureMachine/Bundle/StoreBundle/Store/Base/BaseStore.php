@@ -15,7 +15,7 @@ use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 abstract class BaseStore implements JsonSerializable
 {
     private static $jsonSchema = array();
-    private $_adapter = null;
+    protected $_adapter = null;
     private $_storePropertiesCache = array();
     protected $_jsonSchema = array();
 
