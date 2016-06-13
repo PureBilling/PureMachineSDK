@@ -12,7 +12,7 @@ use Symfony\Component\Validator\Constraint;
 use PureMachine\Bundle\SDKBundle\Store\Base\JsonSerializable;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 
-abstract class BaseStore implements JsonSerializable
+abstract class BaseStore implements JsonSerializable, BaseStoreInterface
 {
     private static $jsonSchema = array();
     protected $_adapter = null;
