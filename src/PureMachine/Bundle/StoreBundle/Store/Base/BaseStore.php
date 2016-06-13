@@ -350,8 +350,9 @@ abstract class BaseStore implements JsonSerializable, BaseStoreInterface
                     $value = StoreHelper::createClass($storeClass, $data);
                 }
 
-            } elseif ($definition['type'] == 'array')
+            } elseif ($definition['type'] == 'array') {
                 $value = array();
+            }
 
             if (!is_null($value)) {
                 $method = 'set' . ucfirst($property);

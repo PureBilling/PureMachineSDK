@@ -128,6 +128,41 @@ class StoreHelper
             return $defaultClassName[0];
         }
 
+        //Multiple options, using type to decide the store class
+        if (count($defaultClassName) > 1) {
+            $matchedClasses = [];
+            foreach ($defaultClassName as $defaultClassNameItem) {
+                $matches = static::matchType($inValue, $defaultClassNameItem);
+                if ($matches) $matchedClasses[] = $matches;
+            }
+
+            // If only 1 has matched, we use this definition class
+            if (count($matchedClasses)==1) {
+                return $matchedClasses[0];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Use the _type in value to detect if matches with an array of
+     * classes given
+     *
+     * @param $inValue
+     * @param $className
+     * @return mixed
+     */
+    public static function matchType($inValue, $className) {
+        if ($inValue instanceof \stdClass) {
+            $inValueKeys = array_keys(get_object_vars($inValue));
+            if (in_array('_type', $inValueKeys)) {
+                $tempStore = new $className();
+                $tempStoreType = $tempStore->get_type();
+                if ($tempStoreType===$inValue->_type) return $className;
+            }
+        }
+
         return null;
     }
 
