@@ -5,13 +5,24 @@ use PureMachine\Bundle\SDKBundle\Store\ExceptionStore;
 
 class Exception extends \Exception
 {
+
+    /**
+     * @var ExceptionStore
+     */
     private $exceptionStore;
 
     const DEFAULT_ERROR_CODE = 'GENERIC_001';
-
     const GENERIC_001 = 'GENERIC_001';
     const GENERIC_001_MESSAGE = 'Unknown error';
 
+    /**
+     * Exception constructor.
+     *
+     * @param string $detailedMessage
+     * @param null $code
+     * @param \Exception|null $previous
+     * @param ExceptionStore|null $exceptionStore
+     */
     public function __construct($detailedMessage = "", $code = null, \Exception $previous = null,
                                 ExceptionStore $exceptionStore=null)
     {
@@ -28,6 +39,16 @@ class Exception extends \Exception
         $this->setup($code, $message, null, $detailedMessage, $exceptionStore);
     }
 
+    /**
+     * Setups a new internal exception store on the exception class
+     * This exception store is built from the arguments of this method call
+     *
+     * @param $code
+     * @param $message
+     * @param $merchantMessage
+     * @param $debugMessage
+     * @param ExceptionStore|null $exceptionStore
+     */
     protected function setup($code, $message, $merchantMessage, $debugMessage,
                              ExceptionStore $exceptionStore=null)
     {
@@ -36,9 +57,9 @@ class Exception extends \Exception
         } else {
 
             $this->exceptionStore = new ExceptionStore();
-            $this->exceptionStore->setMessage($message);
+            $this->exceptionStore->setErrorMessage($message);
             $this->exceptionStore->setDetailledMessage($debugMessage);
-            $this->exceptionStore->setCode($code);
+            $this->exceptionStore->setErrorCode($code);
             $this->exceptionStore->setExceptionClass(get_class($this));
             $t = explode('\n', $this->getTraceAsString());
             $this->exceptionStore->setStack($t);
@@ -77,24 +98,95 @@ class Exception extends \Exception
         return null;
     }
 
+    /**
+     * Build a exceptionStore from a PHP Exception
+     * @param \Exception $e
+     * @return ExceptionStore
+     */
+    public static function buildExceptionStore(\Exception $e)
+    {
+        $exceptionStore = new ExceptionStore();
+        $exceptionStore->setErrorMessage($e->getMessage());
+        $exceptionStore->setErrorCode($e->getCode());
+        $exceptionStore->setExceptionClass(get_class($e));
+        $t = explode('\n', $e->getTraceAsString());
+        $exceptionStore->setStack($t);
+
+        $stack = $e->getTrace();
+        if (count($stack) > 0) {
+            //Setting default unknown values
+            $exceptionStore->setFile("unknown");
+            $exceptionStore->setLine(0);
+            //Searching for a valid stackItem
+            $stackItem = static::searchForFileAndLineCalledFromStack($stack);
+            if (!is_null($stackItem)) {
+                $exceptionStore->setFile(basename($stackItem['file'],'.php'));
+                $exceptionStore->setLine($stackItem['line']);
+            }
+        }
+
+        return $exceptionStore;
+    }
+
+    /*
+     * Getters and setters
+     */
+
+    /**
+     * Returns the exception store
+     *
+     * @return ExceptionStore
+     */
     public function getStore()
     {
         return $this->exceptionStore;
     }
 
-    public function setStore($e)
+    /**
+     * Injects the exception store on the exception
+     * instance
+     *
+     * @param ExceptionStore $e
+     * @return Exception
+     */
+    public function setStore(ExceptionStore $e)
     {
-        return $this->exceptionStore = $e;
+        $this->exceptionStore = $e;
+        return $this;
     }
 
-    public function addMessage($key, $value)
+    /**
+     * Sets the message on the internal exception store
+     *
+     * @param $value
+     */
+    public function setErrorMessage($value)
     {
-        $this->exceptionStore->addMessage($key, $value);
+        $this->exceptionStore->setErrorMessage($value);
     }
 
+    /**
+     * Returns the errorCode on the internal exception store
+     *
+     * @return string
+     */
     public function getErrorCode()
     {
-        return $this->exceptionStore->getCode();
+        return $this->exceptionStore->getErrorCode();
+    }
+
+    /**
+     * Concat the sent element message on the errorMessage
+     * string.
+     *
+     * @param $message
+     */
+    public function addErrorMessage($message)
+    {
+        if (!$this->exceptionStore->getErrorMessage()) {
+            $this->exceptionStore->setErrorMessage('');
+        }
+        return $this->exceptionStore->setErrorMessage($this->exceptionStore->getErrorMessage().', ' . $message);
     }
 
     public function setMerchantDetails($merchantMessage)
@@ -129,31 +221,46 @@ class Exception extends \Exception
     }
 
     /**
-     * Build a exceptionStore from a PHP Exception
-     * @param \Exception $e
+     * Returns the detailed error message from the internal exception store
+     *
+     * @return mixed
      */
-    public static function buildExceptionStore(\Exception $e)
+    public function getDetailedErrorMessage()
     {
-        $exceptionStore = new ExceptionStore();
-        $exceptionStore->setMessage($e->getMessage());
-        $exceptionStore->setCode($e->getCode());
-        $exceptionStore->setExceptionClass(get_class($e));
-        $t = explode('\n', $e->getTraceAsString());
-        $exceptionStore->setStack($t);
+        return $this->exceptionStore->getDetailedErrorMessage();
+    }
 
-        $stack = $e->getTrace();
-        if (count($stack) > 0) {
-            //Setting default unknown values
-            $exceptionStore->setFile("unknown");
-            $exceptionStore->setLine(0);
-            //Searching for a valid stackItem
-            $stackItem = static::searchForFileAndLineCalledFromStack($stack);
-            if (!is_null($stackItem)) {
-                $exceptionStore->setFile(basename($stackItem['file'],'.php'));
-                $exceptionStore->setLine($stackItem['line']);
-            }
-        }
+    /**
+     * Returns the detailed error code from the internal exception store
+     *
+     * @return mixed
+     */
+    public function getDetailedErrorCode()
+    {
+        return $this->exceptionStore->getDetailedErrorCode();
+    }
 
-        return $exceptionStore;
+    /**
+     * Sets the detailed error message of the internal exception store
+     *
+     * @param $value
+     * @return Exception
+     */
+    public function setDetailedErrorMessage($value)
+    {
+        $this->exceptionStore->setDetailedErrorMessage($value);
+        return $this;
+    }
+
+    /**
+     * Sets the detailed error code of the internal exception store
+     *
+     * @param $value
+     * @return Exception
+     */
+    public function setDetailedErrorCode($value)
+    {
+        $this->exceptionStore->setDetailedErrorCode($value);
+        return $this;
     }
 }

@@ -18,6 +18,7 @@ use PureMachine\Bundle\SDKBundle\Store\WebService\ErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 use Symfony\Component\Validator\Validation;
+use PureMachine\Bundle\SDKBundle\Exception\ExceptionElementInterface;
 
 /**
  * Needed because there is an annotation Inheritance bug in PHP 5.3.3 (centOS version)
@@ -424,7 +425,7 @@ class WebServiceClient
         //Translate the exception if possible
         if($this->isSymfony() && $this->symfonyContainer) {
             $translatedMessage = $this->translateException($data);
-            if(!is_null($translatedMessage)) $data->setMessage($translatedMessage);
+            if(!is_null($translatedMessage)) $data->setErrorMessage($translatedMessage);
         }
 
         if ($serialize) $data = $data->serialize();
@@ -458,8 +459,15 @@ class WebServiceClient
         if(!$this->isSymfony() || !$this->symfonyContainer) return null;
         $translator = $this->getSymfonyTranslator();
 
-        $translatedMessage = $translator->trans($store->getCode(), array(), 'messages', $translator->getLocale());
-        if($translatedMessage!=$store->getCode()) return $translatedMessage;
+        $errorCode = null;
+        if ($store instanceof ExceptionElementInterface) {
+            $errorCode = $store->getErrorCode();
+        } else {
+            $errorCode = $store->getCode();
+        }
+
+        $translatedMessage = $translator->trans($errorCode, array(), 'messages', $translator->getLocale());
+        if($translatedMessage!=$errorCode) return $translatedMessage;
 
         return null;
     }

@@ -3,32 +3,53 @@ namespace PureMachine\Bundle\SDKBundle\Store;
 
 use Symfony\Component\Validator\Constraints as Assert;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
+use PureMachine\Bundle\SDKBundle\Exception\ExceptionElementInterface;
 
 /**
  * Class ExceptionStore
  * @package PureMachine\Bundle\SDKBundle\Store
  *
- * @method getMessage()
- * @method getCode()
+ * @method getErrorMessage()
+ * @method getErrorCode()
+ * @method getDetailedErrorMessage()
+ * @method getDetailedErrorCode()
  * @method getExceptionClass()
  * @method getTicket()
  * @method getDetailledMessage()
+ * @method setErrorMessage()
+ * @method setErrorCode()
+ * @method setDetailedErrorMessage()
+ * @method setDetailedErrorCode()
  */
-class ExceptionStore extends Base\BaseStore
+class ExceptionStore extends Base\BaseStore implements ExceptionElementInterface
 {
     /**
      * @Store\Property(description="Exception generic message")
      * @Assert\Type("string")
      * @Assert\NotBlank
      */
-    protected $message;
+    protected $errorMessage;
 
     /**
      * @Store\Property(description="Exception error code.")
      * @Assert\Type("string")
      * @Assert\NotBlank
      */
-    protected $code;
+    protected $errorCode;
+
+    /**
+     * @Store\Property(description="Raw exception generic message")
+     * @Assert\Type("string")
+     * @Assert\NotBlank
+     */
+    protected $detailedErrorMessage;
+
+    /**
+     * @Store\Property(description="Raw exception error code.")
+     * @Assert\Type("string")
+     * @Assert\NotBlank
+     */
+    protected $detailedErrorCode;
 
     /**
      * @Store\Property(description="Full exception class name.")
@@ -97,7 +118,7 @@ class ExceptionStore extends Base\BaseStore
 
     public function getCompleteMessage()
     {
-        return $this->getMessage(). ": " . $this->getDetailledMessage()
+        return $this->getErrorMessage(). ": " . $this->getDetailledMessage()
                ." in " . $this->getFile() .":" . $this->getLine();
     }
 
@@ -106,6 +127,24 @@ class ExceptionStore extends Base\BaseStore
         $this->metadata[$key] = $value;
 
         return $this;
+    }
+
+    /***
+     * FIXME: For retrocompatibility, to remove
+     * @return mixed
+     */
+    public function getMessage()
+    {
+        return $this->errorMessage;
+    }
+
+    /***
+     * FIXME: For retrocompatibility, to remove
+     * @return mixed
+     */
+    public function getCode()
+    {
+        return $this->errorCode;
     }
 
 }

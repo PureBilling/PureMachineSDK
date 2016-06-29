@@ -34,7 +34,7 @@ class WebServiceException extends Exception
 
             if ($answer instanceof ErrorResponse) {
 
-                $message = $answer->getAnswer()->getCode() .": ". $answer->getAnswer()->getMessage() ." \n";
+                $message = $answer->getAnswer()->getErrorCode() .": ". $answer->getAnswer()->getErrorMessage() ." \n";
 
                 if ($answer->getAnswer()->isStoreProperty('detailledMessage')) {
                     $message .= $answer->getAnswer()->getDetailledMessage();
@@ -95,7 +95,7 @@ class WebServiceException extends Exception
                 if (class_exists($class)) {
                     $ex = null;
                     try {
-                        $ex = new $class($message, $answer->getAnswer()->getCode(), null);
+                        $ex = new $class($message, $answer->getAnswer()->getErrorCode(), null);
                         if ($ex instanceof Exception) {
                             $ex->setStore($answer->getAnswer());
                         }
@@ -109,8 +109,8 @@ class WebServiceException extends Exception
             }
 
             $e = new WebServiceException($message);
-            $e->getStore()->setMessage($answer->getAnswer()->getMessage());
-            $e->getStore()->setCode($answer->getAnswer()->getCode());
+            $e->getStore()->setErrorMessage($answer->getAnswer()->getErrorMessage());
+            $e->getStore()->setErrorCode($answer->getAnswer()->getErrorCode());
             throw $e;
         }
     }

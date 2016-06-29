@@ -242,9 +242,9 @@ class HttpHelper
 
 
             $e = $this->createException($message, $exception_code);
-            $e->addMessage('output', $output);
-            $e->addMessage('called URL', $url);
-            $e->addMessage('data sent:', $data);
+            $e->addErrorMessage('output', $output);
+            $e->addErrorMessage('called URL', $url);
+            $e->addErrorMessage('data sent:', $data);
             $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
@@ -253,9 +253,9 @@ class HttpHelper
             $e = $this->createException("HTTP exception: error " . $statusCode ." for ". $url
                                   ." . Page or service not found.",
                                   HTTPException::HTTP_404);
-            $e->addMessage('output', $output);
-            $e->addMessage('called URL', $url);
-            $e->addMessage('data sent:', $data);
+            $e->addErrorMessage('output', $output);
+            $e->addErrorMessage('called URL', $url);
+            $e->addErrorMessage('data sent:', $data);
             $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
@@ -264,9 +264,9 @@ class HttpHelper
             $e = $this->createException("HTTP exception: error " . $statusCode ." for ". $url
                                   ." . Invalid credentials.",
                                    HTTPException::HTTP_401);
-            $e->addMessage('output', $output);
-            $e->addMessage('called URL', $url);
-            $e->addMessage('data sent:', $data);
+            $e->addErrorMessage('output', $output);
+            $e->addErrorMessage('called URL', $url);
+            $e->addErrorMessage('data sent:', $data);
             $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
@@ -274,9 +274,9 @@ class HttpHelper
         if ($this->proxy && $statusCode == 100) {
             $errorMessage = "HTTP Timeout (100)for " . $url;
             $e = $this->createException($errorMessage, HTTPException::HTTP_100);
-            $e->addMessage('output', $output);
-            $e->addMessage('called URL', $url);
-            $e->addMessage('data sent:', $data);
+            $e->addErrorMessage('output', $output);
+            $e->addErrorMessage('called URL', $url);
+            $e->addErrorMessage('data sent:', $data);
             $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
@@ -284,9 +284,9 @@ class HttpHelper
         if ($statusCode != 200) {
             $errorMessage = "HTTP exception: error " . $statusCode . " for $url";
             $e = $this->createException($errorMessage, HTTPException::HTTP_500);
-            $e->addMessage('output', $output);
-            $e->addMessage('called URL', $url);
-            $e->addMessage('data sent:', $data);
+            $e->addErrorMessage('output', $output);
+            $e->addErrorMessage('called URL', $url);
+            $e->addErrorMessage('data sent:', $data);
             $this->triggerHttpRequestEvent($data, $output, $url, $method, $statusCode, $duration);
             throw $e;
         }
