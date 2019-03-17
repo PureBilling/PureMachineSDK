@@ -5,7 +5,7 @@ use PureMachine\Bundle\SDKBundle\Store\Base\SimpleType;
 use Symfony\Component\Validator\Constraints as Assert;
 use PureMachine\Bundle\SDKBundle\Store\Annotation as Store;
 
-class String extends SimpleType
+class PBString extends SimpleType
 {
     /**
      * @Store\Property(description="String generic store")

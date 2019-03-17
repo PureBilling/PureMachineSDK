@@ -1,7 +1,7 @@
 <?php
 namespace PureMachine\Bundle\SDKBundle\Store\Base;
 
-use PureMachine\Bundle\SDKBundle\Store\Type\String;
+use PureMachine\Bundle\SDKBundle\Store\Type\PBString;
 use PureMachine\Bundle\SDKBundle\Store\Type\Boolean;
 
 /**
@@ -193,7 +193,7 @@ class StoreHelper
     {
         switch (gettype($inputData)) {
             case 'string':
-                $store = new String();
+                $store = new PBString();
                 $store->setValue($inputData);
 
                 return $store;

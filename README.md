@@ -8,7 +8,8 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 ### master
 
 - allow to remove null properties from serialization
-- allow date serialization using ISO 8601 
+- allow date serialization using ISO 8601
+- remane String class to PBString
 
 ### 2.0.6
 
